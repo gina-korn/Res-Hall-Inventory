@@ -1,0 +1,260 @@
+@charset "utf-8";
+/* CSS Document */
+
+/******* Body ******/
+body 
+{
+   font-family: Helvetica, Geneva, Arial, sans-serif;
+   font-size: 12px;
+   font-color: #141414;
+   background-image:url('BGPattern.gif');
+   background-repeat:repeat; 
+}
+
+#wrapper 
+{
+	position: relative;
+	top:0px;
+	bottom:0px;
+	margin:0 auto;
+	width: 960px;
+	background-color: #f7f0d3;	
+}
+
+/******* Login page style *****/
+#login
+{
+	position: relative;
+	top:100px;
+	margin:0 auto;
+	width: 500px;
+	padding: 10px;
+	background-color: #f7f0d3;
+	border:solid;
+	border-width:2px;
+	border-color:#950020;
+}
+
+#login h1 
+{
+	color:#690015;
+	border-bottom:1px dashed #690015;
+	font-size:1.8em;
+	padding:10px 0 0;
+}
+
+/******* Header ******/
+#header 
+{
+	position:relative;
+	top:0px;
+	border-bottom:3px solid #950020;
+	height:150px;
+	margin:0 0 0 0;
+	width:960px;
+	background-image:url('headBG3.jpg');
+}
+
+/* for title */
+#header h1 
+{
+	color:#fff;
+	font-size:400%;
+	letter-spacing:-2px;
+	text-align:right;
+	padding:10px;
+	padding-right:25px;
+/*	padding-left:20px; */
+	margin-bottom:-20px;
+	letter-spacing: .75px;
+}
+
+/****** Main content links *******/
+#headerLinks 
+{
+	position:relative;
+	top:-17px;
+	border-bottom:3px solid #950020;
+	height:30px;
+	margin:0 0 0 0;
+	width:960px;
+	background-image:url('linksBG1.jpg');
+	background-repeat:repeat-x;	
+}
+
+/*** For the individual links inside the headerLinks bar ***/
+#links
+{
+	list-style:none;
+	font-weight:bold;
+	margin-bottom:10px;
+	font-size:140%;
+	width:100%;
+	position:relative;
+	z-index:5;
+}
+#links li
+{
+	float:left;
+	margin-right:10px;
+	position:relative;
+	padding-left:20px;
+	padding-right:20px;
+	
+}
+#links a
+{
+	display:block;
+	padding:5px;
+	color:#fff;
+	text-decoration:none;
+}
+#links a:hover
+{
+	color:#fff;
+	background:#950020;
+	text-decoration:none;
+}
+
+/*** For the dropdown lists ***/
+#links ul
+{
+	background:#fff;
+	background:rgba(255,255,255,0); 
+	list-style:none;
+	position:absolute;
+	left:-9999px;
+}
+#links ul li
+{
+	padding-top:1px;
+	float:none;
+}
+#links ul a
+{
+	white-space:nowrap;
+}
+#links li:hover ul
+{ 
+	left:0;
+	margin-left:-40px;
+}
+#links li:hover a
+{ 
+	background:#950020;
+	text-decoration:none;
+}
+#links li:hover ul a
+{
+	text-decoration:none;
+}
+#links li:hover ul li a:hover{
+	background:#333;
+}
+
+
+
+
+/*** Content and sidebar areas ***/
+#content 
+{
+	position:relative;
+	min-height:400px;
+    height:auto !important;
+    height:400px;
+	margin:0px;
+	margin-left:10px;
+	padding:10px;
+	margin-top:-20px;
+	width:700px;
+}
+
+#content h1 
+{
+	color:#690015;
+	border-bottom:1px dashed #690015;
+	font-size:1.8em;
+	line-height:25px;
+}
+
+.scrollBox 
+{
+    height:400px;
+	width:620px;
+	border:1px solid #690015;
+	overflow-y:scroll;
+}
+
+.forms 
+{
+	width:600px;
+	border:1px solid #690015;
+	background-color:#ebe3c3;
+}
+.reports 
+{
+	width:700px;
+	border:1px solid #690015;
+	background-color:#ebe3c3;
+}
+
+
+#sidebar
+{
+	position:relative;
+	float: right; 
+	margin: 15px; 
+	margin-top:29px;
+	padding: 10px;
+	width:180px;
+	border:1px dashed #690015;
+}
+
+
+/****** Footer ****/
+#footer 
+{
+	position:relative;
+	top:0px;
+	border-top:3px solid #950020;
+	padding: 5px;
+	padding-left:15px;
+	width:940px;
+	background-color:#d0bf8b;
+}
+
+/****** Links ******/
+
+a:link, a:visited
+{
+	color: #690015;
+	text-decoration: none;
+}
+
+a:hover
+{
+	color: #950020;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+/******* Other *****/
+.buttons
+{
+	border-style:none;
+	cursor:pointer; 
+	background-color:transparent;
+}
+
+.error 
+{
+	font-weight: bold;
+	color: #d9042b;
+}
+
+.float /* For an image */ 
+{ 
+    float: left; 
+    margin: 6px; 
+}
+

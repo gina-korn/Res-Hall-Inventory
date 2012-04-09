@@ -1,0 +1,199 @@
+@charset "utf-8";
+/* CSS Document */
+
+/******* Body ******/
+body 
+{
+   font-family: Helvetica, Geneva, Arial, sans-serif;
+   font-size: 12px;
+   font-color: #000;
+   background-repeat:repeat; 
+}
+
+#wrapper 
+{
+	position: relative;
+	top:0px;
+	bottom:0px;
+	margin:0;
+	width: 800px;
+	background-color: #ffffff;	
+}
+
+/******* Login page style *****/
+#login
+{
+	position: relative;
+	top:100px;
+	margin:0 auto;
+	width: 500px;
+	padding: 10px;
+	background-color: #fff;
+	border:solid;
+	border-width:2px;
+	border-color:#000;
+}
+
+#login h1 
+{
+	color:#000;
+	border-bottom:1px dashed #000;
+	font-size:1.8em;
+	padding:10px 0 0;
+}
+
+/******* Header ******/
+#header 
+{
+	position:relative;
+	top:0px;
+	border-bottom:1px solid #000;
+	height:100px;
+	margin:0 0 0 0;
+	width:800px;
+}
+
+/* for title */
+#header h1 
+{
+	color:#000;
+	font-size:400%;
+	letter-spacing:-2px;
+	text-align:left;
+	padding:10px;
+	margin-bottom:-20px;
+	letter-spacing: .75px;
+}
+
+/****** Main content links *******/
+#headerLinks 
+{
+	position:relative;
+	top:0px;
+	border-bottom:1px solid #000;
+	height:26px;
+	margin:0 0 0 0;
+	width:800px;
+	background-repeat:repeat-x;	
+}
+
+/*** For the individual links inside the headerLinks bar ***/
+.links 
+{
+	position:relative;
+	top:5px;
+	padding-left:20px;
+	padding-right:20px;
+	font-size:100%;
+	font-weight: bold;
+	width:200px;
+
+}
+.links a:link 
+{
+	color: #000;
+}
+.links a:visited
+{
+	color: #000;
+}
+
+
+/*** Content and sidebar areas ***/
+#content 
+{
+	position:relative;
+	min-height:400px;
+    height:auto !important;
+    height:400px;
+	margin:0px;
+	margin-left:10px;
+	padding:10px;
+	width:780px;
+}
+
+#content h1 
+{
+	color:#000;
+	border-bottom:1px dashed #000;
+	font-size:1.8em;
+	line-height:25px;
+}
+
+.scrollBox 
+{
+    height:400px;
+	width:620px;
+	border:1px solid #000;
+	overflow-y:scroll;
+}
+
+.forms 
+{
+	width:600px;
+	border:1px solid #000;
+	background-color:#fff;
+}
+.reports 
+{
+	width:700px;
+	border:1px solid #000;
+	background-color:#fff;
+}
+
+
+#sidebar
+{
+	display:none;	
+}
+#sidebar a:link 
+{
+	color: #fff;
+}
+#sidebar a:visited
+{
+	color: #fff;
+}
+
+
+/****** Footer ****/
+#footer 
+{
+	display:none;
+}
+
+/****** Links ******/
+
+a:link, a:visited
+{
+	color: #000;
+	text-decoration: none;
+}
+
+a:hover
+{
+	color: #950020;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+/******* Other *****/
+.buttons
+{
+	border-style:none;
+	cursor:pointer; 
+	background-color:transparent;
+}
+
+.error 
+{
+	font-weight: bold;
+	color: #d9042b;
+}
+
+.float /* For an image */ 
+{ 
+    float: left; 
+    margin: 6px; 
+}
+
