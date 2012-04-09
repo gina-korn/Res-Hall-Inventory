@@ -54,6 +54,6 @@ mail($to, $subject, $message, $headers);
 
 header("location: http://www.jamespettit.net/manageUsers.php?m=true");
 	
-
+//hello I am a comment, just checking to make sure this works
 
 ?>
