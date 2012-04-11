@@ -1,0 +1,91 @@
+     
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title><?php echo $page_title; ?></title>
+        <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" />
+        <link rel="stylesheet" href="css/print.css" type="text/css" media="print" />
+        <link href="css/smoothness/jquery-ui-1.8.18.custom.css" type="text/css" rel="stylesheet" />
+		<script src="js/jquery-1.7.1.min.js" type="text/javascript"></script>
+		<script src="js/jquery-ui-1.8.18.custom.min.js" type="text/javascript"></script>
+		<script language="javascript" src="js/calendar.js"></script>
+    </head>
+    
+    <body>
+    	<div id="wrapper">
+            <div id="header">
+                <h1>Morrison Hall Inventory System</h1>
+       
+            </div>
+            
+            <div id="headerLinks">
+            
+            <ul id="links">
+                <li>
+                    <a href="checkIn.php">Check In</a>
+                </li>
+            	<li>
+                    <a href="checkOut.php">Check Out</a>
+                </li>
+                <li>
+                    <a href="reserveItem.php">Reserve Item</a>
+                </li>
+                <li>
+                    <a href="viewAvailable.php">View Available</a>
+                </li>
+                
+                <?php
+                
+              
+                if($_SESSION['isAdmin'] == 1)
+				{
+					echo '
+                    <li>
+                        <a href="#">Management</a>
+                
+                        <ul>
+                            <li><a href="manageUsers.php">Manage Users</a></li>
+                            <li><a href="manageItems.php">Manage Items</a></li>
+                            <li><a href="manageCategories.php">Manage Categories</a></li>
+                            <li><a href="managePackages.php">Manage Packages</a></li>
+                        </ul>
+                    </li>';
+
+   				}
+
+                ?>
+                
+                    <li>
+                        <a href="logout.php">Logout</a>
+                    </li>
+				</ul>
+            </div>
+            
+            
+				<?php
+                if($_SESSION['isAdmin'] == 1)
+				{
+					echo '<div id="sidebar">';
+                    echo '<h3>Admin Available Reports</h3>
+                    	<p><a href="displayReport.php?report=past_due_report">Past due items</a></p>
+                        <p><a href="displayReport.php?report=checked_out_items">Currently checked out items</a></p>
+                        <p><a href="displayReport.php?report=ITEM">View all items</a></p>
+                    	<p><a href="displayReport.php?report=popular_categories">Popular Categories</a></p>
+                        <p><a href="displayReport.php?report=ITEMS_DAMAGED">Damaged Items</a></p>
+                        <p><a href="displayReport.php?report=items_reserved_next_24h">Reservations in the next 24 hr</a></p>
+                        <p><a href="displayReport.php?report=all_items_reserved">All item reservations</a></p>';
+                        
+                        echo '</div>';
+   				} else 
+                {
+					// So far, no sidebar for CA's - This is where it would go if you want to add one
+                    // Just enclose the info in <div id="sidebar"></div>
+              	} 
+                ?>                
+            
+            <div id="content">
+            
+            
+            
+            
