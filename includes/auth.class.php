@@ -191,6 +191,65 @@ class authenticate
             }
         }
     }//end passwordReset
+	
+	function changePassword($username, $userTable, $passwordColumn, $newPassword, $userColumn)
+    {
+        $this->dbConnect();
+ 
+        if($this->passwordColumn == "")
+        {
+            $this->passwordColumn = $passwordColumn;
+        }
+        
+        if($this->userColumn == "")
+        {
+            $this->userColumn = $userColumn;
+        }
+        
+        if($this->userTable == "")
+        {
+            $this->userTable = $userTable;
+        }
+        
+
+        $newpassword_db = md5($newpassword);
+ 
+        $qry = "UPDATE ".$this->userTable." SET ".$this->passwordColumn."=MD5('".$newPassword."') WHERE ".$this->userColumn."='".stripslashes($username)."'";
+        $result = mysql_query($qry) or die(mysql_error());
+ 
+        $to = stripslashes($username);
+        $illegals=array("%0A","%0D","%0a","%0d","bcc:","Content-Type","BCC:","Bcc:","Cc:","CC:","TO:","To:","cc:","to:");
+        $to = str_replace($illegals, "", $to);
+        $getemail = explode("@",$to);
+ 
+        if(sizeof($getemail) > 2)
+        {
+            return false;
+        }
+        
+        else
+        {
+            $from = $_SERVER['SERVER_NAME'];
+            $subject = "Password Change: ".$_SERVER['SERVER_NAME'];
+            $msg = "Your new password is: " . $newPassword;
+ 
+            $headers = "MIME-Version: 1.0 \r\n" ;
+            $headers .= "Content-Type: text/html; \r\n" ;
+            $headers .= "From: $from  \r\n" ;
+ 
+            $sent = mail($to, $subject, $msg, $headers);
+            
+            if($sent)
+            {
+                return true;
+            }
+            
+            else
+            {
+                return false;
+            }
+        }
+    }//end changePassword
     
     
     //*********************************************************************************

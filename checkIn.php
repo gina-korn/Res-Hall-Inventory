@@ -18,7 +18,7 @@
 
 		// Initial 'find student' form //////	
 		echo '
-		<form action="checkIn.php" method="POST">
+		<form action="checkIn.php" method="POST" name = "getResident">
 			<fieldset class="forms">
 				<legend><h2>Find user</h2></legend>
 				<label for="SSID">Student ID</label> <input type="text" name="SSID" id="SSID" value="'; 
@@ -30,52 +30,89 @@
 			</fieldset>
 		</form></br />';
 		
+		//sets the auto focus to the form above it. fill in form name and text box name
+				echo '<script type="text/javascript" language="JavaScript">
+							document.forms["getResident"].elements["name"].focus();
+						</script>';
 		
 	// Make the connection:
 	$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );
+	
+	//Check in all
+	if(isset($_POST['checkAll']))
+	{
+		$resident_id = $_POST['checkAll'];
+		
+		//NO SQL IN THE PHP
+		$que = "Select ORDER_NUMBER, ITEM_ID, ITEM.NAME, DUE_DATE From (CHECKOUT JOIN LINEITEM USING(ORDER_NUMBER)) JOIN ITEM USING(ITEM_ID) WHERE STUDENT_ID = $resident_id AND DATE_CHECKED_IN IS NULL AND CHECKOUT_TYPE = 'checkout'";		
+		$res = @mysqli_query ($dbc, $que); // Run the query.
+		
+		if(!$res)
+			echo "No res";
+		
+		while($row = mysqli_fetch_row($res))
+		{
+			$order_id = $row[0];
+			$item_id = $row[1];
+			$newQ = "CALL check_in($order_id, $item_id, 0, @stat);"; //Order ID, Item ID, damage, status
+			$result =  @mysqli_query($dbc, $newQ);
+		}
+		
+		mysqli_close($dbc);
+		@mysqli_free_result($res);
+	}
+	
+	//Item check in
+	if(isset($_POST['checkIn']))
+	{
+		$myArray = explode("~", $_POST['checkIn']);
+		
+		$cg = $myArray[0];
+		$ITEM_ID = $myArray[1];
+		$ITEM_NAME = $myArray[2];
+		
+		$newQ = "CALL check_in($cg, $ITEM_ID, 0, @stat);"; //Order ID, Item ID, damage, status
+		$result =  @mysqli_query($dbc, $newQ);
+		
+		if(!$result)
+		{
+			echo '<p class = "error">There was a error processing ' . $name[$i] . ' check-in. Please try again</p>';
+			die(mysqli_error($dbc));
+		} else 
+		{
+			echo "<p><b>Checked in item: " . $ITEM_NAME . '</b></p>';
+		}
+	}
+	
 	
 	if(isset($_POST['submitted']))
 	{
 		$resident_id = $_POST['SSID'];
 		
-		if(isset($_POST['check']))
-		{
-			$N = count($_POST['CheckBox']);
-			$checkGroup = $_POST['CheckBox'];
-			$ITEM_IDGroup = $_POST['ITEM_ID'];
-			$name = $_POST['ITEM_Name'];
-			
-			for($i = 0; $i < $N; $i++)
-			{
-				//echo $checkGroup[$i]."<br />";
-				//echo $ITEM_IDGroup[$i]."<br />";
-				
-				$cg = (int)$checkGroup[$i];
-				$id = (int)$ITEM_IDGroup[$i];
-				
-				$newQ = "CALL check_in($cg, $id, 0, @stat);";
-				$result =  @mysqli_query($dbc, $newQ);
-				
-				if(!$result)
-				{
-					echo '<p class = "error">There was a error processing ' . $name[$i] . ' check-in. Please try again</p>';
-					die(mysqli_error($dbc));
-				} else 
-				{
-					echo "<p><b>Checked in item: " . $name[$i] . '</b></p>';
-				}
-			}
-		}
+		
 		
 		if(!empty($_POST['SSID']))
 		{			
 			// Make the query:
-			$q = "Select ORDER_NUMBER, ITEM_ID, ITEM.NAME, DUE_DATE From (CHECKOUT JOIN LINEITEM USING(ORDER_NUMBER)) JOIN ITEM USING(ITEM_ID) WHERE STUDENT_ID = $resident_id AND DATE_CHECKED_IN IS NULL";		
+			
+			//NO SQL IN THE PHP
+			$q = "Select ORDER_NUMBER, ITEM_ID, ITEM.NAME, DUE_DATE From (CHECKOUT JOIN LINEITEM USING(ORDER_NUMBER)) JOIN ITEM USING(ITEM_ID) WHERE STUDENT_ID = $resident_id AND DATE_CHECKED_IN IS NULL AND UPPER(CHECKOUT_TYPE) = 'CHECKOUT'";		
 			$r = @mysqli_query ($dbc, $q); // Run the query.
 			
-			$numRows = mysqli_num_rows($r);
+			if(!$r)
+			{
+				echo "<p class='error'>No user with that Student ID</p>";
+				die();
+			}
+			else
+			{
+				$numRows = @mysqli_num_rows($r);
+			}
+			
 			if ($numRows > 0) 
 			{			
+			
+				
 				echo "<form action='checkIn.php' method='POST'>
 					<fieldset class='forms'>
 						<legend><h2>Checked out items</h2></legend>
@@ -86,25 +123,35 @@
 								<td><b>Due Date</b></td>
 							</tr>";
 							$bg = '#ebe3c3';
+							
+							echo '<button class="buttons" name="checkAll"	value="'. $resident_id. '">
+											<img src="./images/edit.png" length="20" width="20" /></button>';
+											
 							while($row = mysqli_fetch_row($r))
 							{
-								$bg = ($bg=='#f7f0d3' ? '#ebe3c3' : '#f7f0d3');
-								echo "<tr bgcolor='$bg'>
+								//$bg = ($bg=='#f7f0d3' ? '#ebe3c3' : '#f7f0d3');
+								$array[0] = $row[0];
+								$array[1] = $row[1];
+								$array[2] = $row[2];
+								
+								$myData = implode("~", $array);
+								
+								echo '<tr>
 									<td>
-										<input type='checkbox' name='CheckBox[]' value='$row[0]' />
+										<button class="buttons" name="checkIn"	value="' . $myData .'">
+											<img src="./images/edit.png" length="20" width="20" /></button>
 									</td>
-									<td>".$row[2]."</td>
-									<td> ".$row[3]."</td>
-								</tr>";
-								echo "<input type='hidden' name='ITEM_ID[]' value='$row[1]' />";
-								echo "<input type='hidden' name='ITEM_Name[]' value='$row[2]' />";
+									<td>' .$row[2]. ' </td>
+									<td>' .$row[3]. ' </td>
+								</tr>';
+								unset($array);
 							}
 							
 						echo"</table>";
 				
-						echo "<input type='submit' name='check' value='Check In' />
-							<input type='hidden' name='submitted' value='1' />
-					</fieldset>
+						//echo "<input type='submit' name='check' value='Check In' />
+							//<input type='hidden' name='submitted' value='1' />
+					echo"</fieldset>
 				</form>
 				<br />";
 			} else 
@@ -113,7 +160,8 @@
 			}
 				
 			mysqli_close($dbc);
-			mysqli_free_result($r);
+			
+			@mysqli_free_result($r);
 		}
 	}//end name if
 	

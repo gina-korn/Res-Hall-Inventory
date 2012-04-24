@@ -183,9 +183,9 @@
 		echo "<h2>There are currently $numRows active users</h2>";
 	
 		// Table header:
-		echo '<table><tr><td width="20">&nbsp;</td><td width="124"><h3>Last Name</h3></td>
-			<td width="140"><h3>First Name</h3></td>
-			<td width="150"><h3>Email</h3></td>
+		echo '<table><tr><td width="20">&nbsp;</td><td width="20">&nbsp;</td><td width="124"><h3>Last Name</h3></td>
+			<td width="130"><h3>First Name</h3></td>
+			<td width="120"><h3>Email</h3></td>
 			<td width="95"><h3>Hall</h3></td>
 			<td width="50"><h3>Room</h3></td></tr></table>
 			<div class="scrollBox"><table width="100%" cellspacing="0" cellpadding="2">';
@@ -197,14 +197,32 @@
 			echo '<tr bgcolor="' . $bg . '">';
 			
 			if ($row['admin'] == 1)
+			{
 				echo '<td width="16"><img src="images/star.png" /></td>';
+				echo '<td width="16"><a href="promoteUser.php?studID=' . $row['STUDENT_ID'] . '&admin=False"><img src="images/user_delete.png" /></a></td>';
+			}
 			else
+			{
 				echo '<td width="16">&nbsp;</td>';
+				echo '<td width="16"><a href="promoteUser.php?studID=' . $row['STUDENT_ID'] . '&admin=True"><img src="images/user_add.png" /></a></td>';
+			}
 			
 			echo '<td width="150">' . $row['L_NAME'] . '</td><td width="150">' . 
 			$row['F_NAME'] . '</td><td width="150"><a href="mailto:' . $row['EMAIL'] . '" />' . $row['EMAIL'] . '</a></td>' . 
-			'<td width="100">' . $row['NAME'] . '</td><td width="50">' . $row['ROOM_NUMBER'] . '</td><td><a onclick="return confirm(\'Are you sure you want to delete this user?\');" href="deleteUser.php?studID=' . $row['STUDENT_ID'] . '" />' . 
-			'<img src="images/delete.png" /></a></td></tr>';
+			'<td width="100">' . $row['NAME'] . '</td><td width="50">' . $row['ROOM_NUMBER'] . '</td>';
+			
+			if ($row["EMAIL"] != $_SESSION["email"])
+			{
+				echo '<td><a onclick="return confirm(\'Are you sure you want to reset this users password?\');" href="resetPassword.php?email=' . $row["EMAIL"] . '" /><img src="images/shield.png" /></a></td>';
+				echo '<td><a onclick="return confirm(\'Are you sure you want to delete this user?\');" href="deleteUser.php?studID=' . $row['STUDENT_ID'] . '" />' . 
+			'<img src="images/delete.png" /></a></td>';
+			}
+			else
+			{
+				echo '<td colspan="2">&nbsp;</td>';
+			}
+			
+			echo '</tr>';
 		}
 	
 		echo '</table></div>'; // Close the table & div
@@ -230,5 +248,8 @@ if ($_GET['m'])
 
 if ($_GET['d'])
 		echo '<script>$(document).ready(function(){var t=setTimeout("alert(\'The user account has been deleted.\')", 750);});</script>';
+		
+if ($_GET['p'])
+echo '<script>$(document).ready(function(){var t=setTimeout("alert(\'The users password has been reset.\')", 750);});</script>';
 
 ?>

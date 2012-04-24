@@ -153,8 +153,6 @@ body
 }
 
 
-
-
 /*** Content and sidebar areas ***/
 #content 
 {
@@ -191,9 +189,9 @@ body
 	border:1px solid #690015;
 	background-color:#ebe3c3;
 }
-.reports 
+.border 
 {
-	width:700px;
+	width:620px;
 	border:1px solid #690015;
 	background-color:#ebe3c3;
 }
@@ -258,3 +256,94 @@ a:hover
     margin: 6px; 
 }
 
+
+
+/* For the scrollable table w/out header moving */
+.outer 
+{
+	position:relative;
+	padding-top:43px;
+	width:620px;
+	background:#f7f0d3;
+	border:1px solid #690015;
+}
+
+.innera 
+{
+	overflow:auto;
+	width:618px;	
+	height:400px;
+	background:#f7f0d3;
+}
+
+
+.outer thead tr 
+{
+	position:absolute;
+	top:0;
+	height:20px;
+	left:0;
+}
+
+.outer tfoot td 
+{
+	position:absolute;
+	width:618px;
+	height:0px;
+	background:#ebe3c3; 
+	bottom:0;
+	left:0;
+}
+
+.outer th, .outer td 
+{
+	text-align:left;
+}
+
+.outer th 
+{
+	background:#d0bf8b; 
+	color:#fff;
+}
+
+<!-- From http://tablesorter.com/ jquery tablesorter by Christian Bach (Modified) -->
+table.tablesorter 
+{
+	background-color: #f7f0d3;
+	font-size: 8pt;
+	width: 100%;
+	text-align: left;
+}
+table.tablesorter thead tr th, table.tablesorter tfoot tr th {
+	color:#000;
+	background-color: #d0bf8b;
+	border: 1px solid #690015;
+	font-size: 10pt;
+	padding: 5px;
+}
+table.tablesorter thead tr .header {
+	background-image: url(bg.gif);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+	height:30px;
+}
+table.tablesorter tbody td {
+	color: #3D3D3D;
+	padding: 4px;
+	background-color: #f7f0d3;
+	vertical-align: top;
+	border-bottom:1px solid #690015;
+}
+table.tablesorter tbody tr.odd td {
+	background-color:#ebe3c3;
+}
+table.tablesorter thead tr .headerSortUp {
+	background-image: url(asc.gif);
+}
+table.tablesorter thead tr .headerSortDown {
+	background-image: url(desc.gif);
+}
+table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
+background-color: #d0bf8b;
+}

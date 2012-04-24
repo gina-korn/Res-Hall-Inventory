@@ -16,43 +16,129 @@
 	echo '<h1>View Available Items</h1>';
 
 	//Connect & Query DB:
-	$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );		
-	$query = "SELECT ITEM.NAME, ITEM.AVAILABLE, CATEGORY.NAME AS CAT_NAME FROM ITEM INNER JOIN CATEGORY ON ITEM.CATEGORY_ID = CATEGORY.CATEGORY_ID WHERE AVAILABLE > 0 ORDER BY CAT_NAME, NAME;";
-	//$query = 'SELECT * FROM items_available ORDER BY Category, Name';						
-
-	$result = @mysqli_query ($dbc, $query); 
+	$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );	
+	$displaySearchRes = 0;
 	
-	$numRows = mysqli_num_rows($result);
+	$query = "SELECT * FROM items_available ORDER BY 'CATEGORY NAME', 'ITEM NAME';";
 	
-	if ($numRows > 0) { 
-	
-		echo "<h2>There are currently $numRows available items</h2>";
-	
-		// Table header:
-		echo '<table><tr><td width="310"><h3>Item Name</h3></td>
-			<td width="140"><h3>Item Quantity</h3></td>
-			<td><h3>Item Category</h3></td></tr></table>
-			<div class="scrollBox"><table width="100%" cellspacing="0" cellpadding="2">';
-		
-		$bg = '#ebe3c3';
-		while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) 
+	//If user searches, overwrite query with search query	
+	if (isset($_POST['submitSearch']))	
+	{
+		// Check for item name
+		if (!empty($_POST['itemName'])) 
 		{
-			$bg = ($bg=='#f7f0d3' ? '#ebe3c3' : '#f7f0d3');
-			echo '<tr bgcolor="' . $bg . '"><td width="310">' . $row['NAME'] . '</td><td width="140">' . 
-			$row['AVAILABLE'] . '</td><td>' . $row['CAT_NAME'] . '</td></tr>';
-		}
+			$itemName = mysqli_real_escape_string($dbc, trim($_POST['itemName']));
+			$query = "SELECT ITEM.NAME, ITEM.AVAILABLE, CATEGORY.NAME AS CAT_NAME FROM ITEM INNER JOIN CATEGORY 
+				ON ITEM.CATEGORY_ID = CATEGORY.CATEGORY_ID WHERE AVAILABLE > 0 AND ITEM.NAME 
+				REGEXP '^.*$itemName.*$' ORDER BY CAT_NAME, ITEM.NAME;";
+			$displaySearchRes = 1;	
+		} 			
+	}
+
+	$result = mysqli_query ($dbc, $query); 
 	
-		echo '</table></div>'; // Close the table & div
+	echo '
+	<form action="viewAvailable.php" method="POST" name="itemSearch">
+		<fieldset class="forms">
+			<legend><h2>Find an Item</h2></legend>									
+			<table>
+				<tr>
+					<td>  
+						<label for="name"><b>Item Name</b></label>								
+					</td>
+					<td>
+						<input type="text" name="itemName" id="itemName" value="" />			
+					</td>
+				</tr>
+				<tr>
+					<td><input type="submit" name="submitSearch" value="Search" /></td>
+					<td><input type="submit" name="resetSearch" value="Reset" />
+					<input type="hidden" name="submitted" value="1" /></td>
+			</table>
+		</fieldset>
+	</form><br /><br />';
 		
-		mysqli_free_result ($result);
+	// Table header:
+	echo '	
+	<div class="outer">
+	<div class="innera">';
 	
-	} else { // If no items were returned
-		echo '<p class="error">There are currently no items.</p>';
+	if($displaySearchRes == 0)
+	{
+		if(!$result) 
+		{
+		  echo 'INVALID QUERY';
+		  exit();
+		}
+		echo'
+		<table id="itemsTable" class="tablesorter" cellspacing="0" celpadding="3"> 
+			<thead> 
+				<tr align="left">
+					<th width="310"><b>Item Name</b></th>
+					<th width="170"><b>Category</b></th>
+					<th width="140"><b>Quantity Available</b></th>
+				</tr>
+			</thead>
+			<tfoot>
+				<tr>
+					<td colspan="5"></td>
+				</tr>
+			</tfoot>
+			<tbody>';
+			
+			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) 
+			{
+				echo '<tr>
+				  <td width="310"><b>' . $row['NAME'] . '</b></td>
+				  <td width="170">' . $row['CATEGORY NAME'] . '</td>
+				  <td width="125">' . $row['AVAILABLE'] . '</td>
+				</tr>';
+			}
+	
+		echo '</tbody></table></div></div><br /><br />';
+		
+	} else {	
+		echo'
+		<table id="itemsTable" class="tablesorter" cellspacing="0" celpadding="3"> 
+			<thead> 
+				<tr align="left">
+					<th width="310"><b>Item Name</b></th>
+					<th width="170"><b>Category</b></th>
+					<th width="140"><b>Quantity Available</b></th>
+				</tr>
+			</thead>
+			<tfoot>
+				<tr>
+					<td colspan="5"></td>
+				</tr>
+			</tfoot>
+			<tbody>';
+			
+			
+			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) 
+			{
+				echo '<tr>
+				  <td width="310"><b>' . $row['NAME'] . '</b></td>
+				  <td width="170">' . $row['CAT_NAME'] . '</td>
+				  <td width="125">' . $row['AVAILABLE'] . '</td>
+				</tr>';
+			}
+		echo '</tbody></table></div></div><br /><br />';	
 	}
 	
-	//Close the db connection
+	//free result and close db
+	mysqli_free_result ($result);
 	mysqli_close($dbc); 
 	
 	//footer:
 	include ('./includes/footer.html');
 ?>
+
+<script type="text/javascript" id="js">
+$(document).ready(function() 
+    { 
+        $("#itemsTable").tablesorter({widgets: ['zebra']});
+    } 
+); 
+
+</script>

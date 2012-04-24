@@ -51,4 +51,7 @@
                 
 <?php
 include ('./includes/footer.html');
+
+if ($_GET['p'])
+echo '<script>$(document).ready(function(){var t=setTimeout("alert(\'Your password has been changed.\')", 750);});</script>';
 ?>

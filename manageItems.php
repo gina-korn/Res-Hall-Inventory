@@ -14,8 +14,8 @@
 	
 	echo '<h1>Manage Items</h1>';
 
-	// $pageNum is used by the page to determine whether to display the add form or the edit form
-	$pageNum = 'add';
+	// $pageType is used by the page to determine whether to display the add form or the edit form
+	$pageType = 'add';
 	$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: '.mysqli_connect_error());
 	
 	if (isset($_POST['submitted'])) 
@@ -70,17 +70,30 @@
 			
 			$itemID = trim($_POST['itemID']);
 			
-			//I'm not error checking this, because the user is locked into a dropdown list for category(bad idea?)
 			$itemCategory = trim($_POST['itemCategory']);
+			$itemPackage = trim($_POST['itemPackage']);
 		}
 		
 		if($submitVal == 1) // Add item
 		{					
+			// Making sure there isn't already an item with the same name
+			if (empty($errorArray)) 
+			{ 
+				$q = "SELECT * FROM ITEM WHERE NAME = '$itemName';";	
+				$r = @mysqli_query ($dbc, $q);
+				$numRows = mysqli_num_rows($r);
+				if ($numRows > 0) 
+				{ 
+					$errorArray[] = 'Item name already in use, please re-enter';
+				}
+			}// end if errors
+			
+			
 			// No errors, add new item
 			if (empty($errorArray)) 
 			{ 
-				$query = "INSERT INTO ITEM (NAME, QUANTITY, AVAILABLE, HALL_ID, CATEGORY_ID) VALUES ('$itemName', 
-					'$itemQuantity', '$itemAvailable', '$hallID', '$itemCategory' )";		
+				$query = "INSERT INTO ITEM (NAME, QUANTITY, AVAILABLE, HALL_ID, CATEGORY_ID, PACKAGE_ID) 
+					VALUES ('$itemName', '$itemQuantity', '$itemAvailable', '$hallID', '$itemCategory', '$itemPackage' );";		
 				$result = @mysqli_query ($dbc, $query);
 				
 				if ($result) 
@@ -101,27 +114,58 @@
 		{
 			
 			$item = $_POST['itemDelete']; 
-			$query = "DELETE FROM ITEM WHERE ITEM.ITEM_ID = $item";		
-			$result = @mysqli_query ($dbc, $query);
 			
-			if ($result) 
+			// Check for checked-out items
+			$query = "SELECT CHECKED_OUT_COUNT FROM ITEM WHERE ITEM.ITEM_ID = $item;";
+			$result = @mysqli_query ($dbc, $query);
+			$row = mysqli_fetch_array($result, MYSQLI_ASSOC);
+			if($row['CHECKED_OUT_COUNT'] > 0)
 			{
-				echo "<p><b>Item has successfully been removed.</b></p>";	
+				$errorArray[] = 'Cannot delete an item that is currently checked out';
+			}
+			
+			if (empty($errorArray)) 
+			{
+				$query = "DELETE FROM ITEM WHERE ITEM.ITEM_ID = $item;";		
+				$result = @mysqli_query ($dbc, $query);
 				
-			} else 
-			{
-				echo '<p class="error"><b>System Error</b><br />
-					Item could not be removed due to a system error. We apologize for any inconvenience.</p>'; 							
-			} // End of if ($result)
+				if ($result) 
+				{
+					echo "<p><b>Item has successfully been removed.</b></p>";	
+					
+				} else 
+				{
+					echo '<p class="error"><b>System Error</b><br />
+						Item could not be removed due to a system error. We apologize for any inconvenience.</p>'; 							
+				} // End of if ($result)
+			}
 		}// End of delete
 		
-		if($submitVal == 3) //edit item (post)
+		if($submitVal == 3 && !isset($_POST['cancelEdit'])) //edit item (post)
 		{			
+			// Checking for duplicate item names 
+			if (empty($errorArray)) 
+			{ 
+				$q = "SELECT * FROM ITEM WHERE NAME = '$itemName';";	
+				$r = @mysqli_query ($dbc, $q);
+				$numRows = mysqli_num_rows($r);
+				if ($numRows > 0) 
+				{ 
+					$row = mysqli_fetch_array($r, MYSQLI_ASSOC);
+					$newID = $row['ITEM_ID'];
+					if($newID != $itemID)
+					{
+						$errorArray[] = 'Item name already in use, please re-enter';	
+					}
+				}
+			}// end if errors
+			
 			// No errors, edit item
 			if (empty($errorArray)) 
 			{ 
 				$query = "UPDATE ITEM SET NAME='$itemName', QUANTITY='$itemQuantity', AVAILABLE='$itemAvailable', 
-					HALL_ID='$hallID', CATEGORY_ID='$itemCategory' WHERE ITEM_ID='$itemID' LIMIT 1";		
+					HALL_ID='$hallID', CATEGORY_ID='$itemCategory', PACKAGE_ID='$itemPackage' 
+					WHERE ITEM_ID='$itemID' LIMIT 1;";		
 				$result = @mysqli_query ($dbc, $query);
 				
 				if ($result) 
@@ -137,7 +181,7 @@
 								
 			} else {
 		
-				$pageNum = 'edit';	
+				$pageType = 'edit';	
 			}
 			
 		}//end of $submitVal == 3
@@ -155,10 +199,15 @@
 		}
 		
 	} // End of if (isset($_POST['submitted']))
+	
+	if (isset($_POST['cancelEdit']))
+	{
+		$pageType == 'add';
+	}
 
 /////// Forms ////////////
 	// edit item form
-	if(($_POST['itemEdit'] != NULL) || $pageNum == 'edit')
+	if(($_POST['itemEdit'] != NULL) || $pageType == 'edit')
 	{
 		if (isset($_POST['itemID']))
 		{
@@ -169,7 +218,7 @@
 			$item = $_POST['itemEdit'];
 		}
 		
-		$query = "SELECT * FROM ITEM WHERE ITEM.ITEM_ID = $item";		
+		$query = "SELECT * FROM ITEM WHERE ITEM.ITEM_ID = $item;";		
 		$r = @mysqli_query ($dbc, $query);
 		$row = mysqli_fetch_array($r, MYSQLI_ASSOC);
 		
@@ -186,6 +235,31 @@
 							<input type="text" name="itemName" id="itemName" value="' . $row['NAME'] . '" /> 
 							<input type="hidden" name="itemID" value="' . $row['ITEM_ID'] . '" /> 			
 						</td>
+						<td>  
+							<label for="package"><b>Item Package</b></label>								
+						</td>
+						<td>
+							<select id="itemPackage" name="itemPackage">
+							<optgroup label="Item Package">';
+					   
+								$query = "SELECT * FROM PACKAGE ORDER BY package_name;";		
+								$r = @mysqli_query ($dbc, $query); 
+								
+								while ($row3 = mysqli_fetch_array($r, MYSQLI_ASSOC)) 
+								{
+									if($row3['package_id'] == $row['PACKAGE_ID'])
+									{
+										echo '<option selected="selected" value="' . $row3['package_id'] . '">' . $row3['package_name'] . '</option>';
+									} else 
+									{
+										echo '<option value="' . $row3['package_id'] . '">' . $row3['package_name'] . '</option>';
+									}
+								
+								}//end while
+							echo '        
+							</optgroup>
+							</select>																
+						</td>
 					</tr>
 					<tr>
 						<td>
@@ -194,14 +268,16 @@
 						<td>
 							<input type="text" name="itemQuantity" id="itemQuantity" value="' . $row['QUANTITY'] . '" />	
 						</td>
+						<td colspan="2"></td>
 					</tr>
 					<tr>
 						<td>
 							<label for="quantityAvail"><b>Quantity Available</b></label>	
 						</td>
 						<td>
-							<input type="text" name="itemAvailable" id="itemAvailable" value="' . $row['AVAILABLE'] . '" />	 (Leave blank for 0)
+							<input type="text" name="itemAvailable" id="itemAvailable" value="' . $row['AVAILABLE'] . '" />
 						</td>
+						<td colspan="2"></td>
 					</tr>
 					<tr>
 						<td>
@@ -211,7 +287,7 @@
 							<select id="itemCategory" name="itemCategory">
 							<optgroup label="Item Category">';
 					   
-								$query = "SELECT CATEGORY_ID, NAME FROM CATEGORY ORDER BY NAME";		
+								$query = "SELECT CATEGORY_ID, NAME FROM CATEGORY ORDER BY NAME;";		
 								$r = @mysqli_query ($dbc, $query); 
 								
 								while ($row2 = mysqli_fetch_array($r, MYSQLI_ASSOC)) 
@@ -230,13 +306,14 @@
 							</optgroup>
 							</select>																
 						</td>
+						<td colspan="2"></td>
 					</tr>
 					<tr>
 						<td>
 							<input type="submit" name="editItem" value="Submit Changes" />
 							<input type="hidden" name="submitted" value="3" />						
-						</td>
-						<td></td>
+						</td>	
+						<td colspan="3"></td>
 					</tr>
 				</table>
 			</fieldset>
@@ -246,7 +323,7 @@
 		exit();	
 	}// end of edit form		
 
-	if($pageNum == 'add')
+	if($pageType == 'add')
 	{
 		echo '
 		<form action="manageItems.php" method="POST" name="addItemForm">
@@ -262,6 +339,25 @@
 							if(isset($_POST['itemName'])) echo $_POST['itemName'];
 							echo '" /> 			
 						</td>
+						<td>  
+							<label for="package"><b>Item Package</b></label>								
+						</td>
+						<td>
+							<select id="itemPackage" name="itemPackage">
+							<optgroup label="Item Package">';
+					   
+								$query = "SELECT package_id, package_name FROM PACKAGE ORDER BY package_name;";		
+								$r = @mysqli_query ($dbc, $query); 
+								
+								while ($row3 = mysqli_fetch_array($r, MYSQLI_ASSOC)) 
+								{
+									echo '<option value="' . $row3['package_id'] . '">' . $row3['package_name'] . '</option>';
+									
+								}//end while
+							echo '        
+							</optgroup>
+							</select>																
+						</td>
 					</tr>
 					<tr>
 						<td>
@@ -272,6 +368,7 @@
 							if(isset($_POST['itemQuantity'])) echo $_POST['itemQuantity'];
 							echo '" />	
 						</td>
+						<td colspan="2"></td>
 					</tr>
 					<tr>
 						<td>
@@ -280,8 +377,9 @@
 						<td>
 							<input type="text" name="itemAvailable" id="itemAvailable" value="';
 							if(isset($_POST['itemAvailable'])) echo $_POST['itemAvailable'];
-							echo '" /> (Leave blank for 0)
+							echo '" />
 						</td>
+						<td colspan="2"></td>
 					</tr>
 					<tr>
 						<td>
@@ -291,7 +389,7 @@
 							<select id="itemCategory" name="itemCategory">
 							<optgroup label="Item Category">';
 					   
-								$q = "SELECT CATEGORY_ID, NAME FROM CATEGORY ORDER BY NAME";		
+								$q = "SELECT CATEGORY_ID, NAME FROM CATEGORY ORDER BY NAME;";		
 								$r = @mysqli_query ($dbc, $q); 
 								
 								while ($row = mysqli_fetch_array($r, MYSQLI_ASSOC)) 
@@ -304,13 +402,14 @@
 							</optgroup>
 							</select>																
 						</td>
+						<td colspan="2"></td>
 					</tr>
 					<tr>
 						<td>
 							<input type="submit" name="addItem" value="Add Item" />
 							<input type="hidden" name="submitted" value="1" />						
 						</td>
-						<td></td>
+						<td colspan="3"></td>
 					</tr>
 				</table>
 			</fieldset>

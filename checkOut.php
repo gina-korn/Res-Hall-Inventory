@@ -135,6 +135,7 @@ echo '
 			$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );
 			
 			// Make the query:
+			//NEED STORED PROCEDURE
 			$q = "SELECT * FROM USER WHERE STUDENT_ID = $resident_id";		
 			$r = @mysqli_query ($dbc, $q); // Run the query.
 			
@@ -235,6 +236,7 @@ echo '
 			$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );
 			
 			// Make the query:
+			//NEED STORED PROCEDURE
 			$q = "SELECT ITEM_ID, NAME, QUANTITY, AVAILABLE, CATEGORY_ID FROM ITEM WHERE NAME = " . "'". "$itemName" ."'";		
 			$r = @mysqli_query ($dbc, $q); // Run the query.
 			
@@ -353,7 +355,7 @@ echo '
 						$orderNum = 0;
 						//$num = mysqli_num_rows($r);
 				
-						
+						//NEED STORED PROCEDURE
 						$q = "SELECT MAX(ORDER_NUMBER) + 1  AS 'ORDER_NUM' FROM CHECKOUT";
 						$r =  @mysqli_query($dbc, $q);
 						
@@ -370,6 +372,7 @@ echo '
 						
 						
 						echo $orderNum . " " . $studentID . " " . $item_ID . " " . $type . " " . $trueDate . " Due Date: " .  $TrueDueDate; 
+						
 						$q = "call check_out($orderNum,$studentID, $item_ID, 'checkout' ,now(),now() + interval 1 day,@stat);";
 						$r =  @mysqli_query($dbc, $q);
 						
