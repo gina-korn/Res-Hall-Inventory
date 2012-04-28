@@ -15,27 +15,26 @@
 	
 	echo '<h1>View Available Items</h1>';
 
-	//Connect & Query DB:
-	$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );	
+	//Connect to DB
+	$mysqli = new mysqli(HOST, USER, PASSWORD, DBNAME);
+	if (mysqli_connect_errno()) 
+	{
+		echo "<p class='error'>Connection failed, contact system administrator</p>";
+		exit();
+	}
+	
 	$displaySearchRes = 0;
 	
-	$query = "SELECT * FROM items_available ORDER BY 'CATEGORY NAME', 'ITEM NAME';";
-	
-	//If user searches, overwrite query with search query	
+	//If user searches
 	if (isset($_POST['submitSearch']))	
 	{
 		// Check for item name
 		if (!empty($_POST['itemName'])) 
 		{
-			$itemName = mysqli_real_escape_string($dbc, trim($_POST['itemName']));
-			$query = "SELECT ITEM.NAME, ITEM.AVAILABLE, CATEGORY.NAME AS CAT_NAME FROM ITEM INNER JOIN CATEGORY 
-				ON ITEM.CATEGORY_ID = CATEGORY.CATEGORY_ID WHERE AVAILABLE > 0 AND ITEM.NAME 
-				REGEXP '^.*$itemName.*$' ORDER BY CAT_NAME, ITEM.NAME;";
+			$itemName = mysqli_real_escape_string($mysqli, trim($_POST['itemName']));
 			$displaySearchRes = 1;	
 		} 			
 	}
-
-	$result = mysqli_query ($dbc, $query); 
 	
 	echo '
 	<form action="viewAvailable.php" method="POST" name="itemSearch">
@@ -62,73 +61,80 @@
 	echo '	
 	<div class="outer">
 	<div class="innera">';
-	
+	echo'
+	<table id="itemsTable" class="tablesorter" cellspacing="0" celpadding="3"> 
+		<thead> 
+			<tr align="left">
+				<th width="310"><b>Item Name</b></th>
+				<th width="170"><b>Category</b></th>
+				<th width="140"><b>Quantity Available</b></th>
+			</tr>
+		</thead>
+		<tfoot>
+			<tr>
+				<td colspan="5"></td>
+			</tr>
+		</tfoot>
+		<tbody>';
+			
+	// if search has not been used, display all available items
 	if($displaySearchRes == 0)
-	{
-		if(!$result) 
-		{
-		  echo 'INVALID QUERY';
-		  exit();
+	{	
+		//query and display results
+		if ($mysqli->multi_query("SELECT * FROM items_available ORDER BY 'CATEGORY NAME', 'ITEM NAME';")) 
+		{	
+			do 
+			{
+				if ($result = $mysqli->store_result()) 
+				{
+					while ($row = $result->fetch_row()) 
+					{
+						echo '<tr>
+							<td width="310"><b>' . $row[1] . '</b></td>
+							<td width="170">' . $row[5] . '</td>
+							<td width="125">' . $row[3] . '</td>
+						</tr>';
+					}
+				  $result->close();
+			   }
+		  } while ($mysqli->next_result());
 		}
-		echo'
-		<table id="itemsTable" class="tablesorter" cellspacing="0" celpadding="3"> 
-			<thead> 
-				<tr align="left">
-					<th width="310"><b>Item Name</b></th>
-					<th width="170"><b>Category</b></th>
-					<th width="140"><b>Quantity Available</b></th>
-				</tr>
-			</thead>
-			<tfoot>
-				<tr>
-					<td colspan="5"></td>
-				</tr>
-			</tfoot>
-			<tbody>';
-			
-			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) 
+		else 
+		{
+		  echo "<p class='error'>Invalid Query</p>";
+		}				
+	} else 
+	{	
+		//query and display results
+		if ($mysqli->multi_query("CALL regex_search('$itemName');")) 
+		{	
+			do 
 			{
-				echo '<tr>
-				  <td width="310"><b>' . $row['NAME'] . '</b></td>
-				  <td width="170">' . $row['CATEGORY NAME'] . '</td>
-				  <td width="125">' . $row['AVAILABLE'] . '</td>
-				</tr>';
-			}
-	
-		echo '</tbody></table></div></div><br /><br />';
-		
-	} else {	
-		echo'
-		<table id="itemsTable" class="tablesorter" cellspacing="0" celpadding="3"> 
-			<thead> 
-				<tr align="left">
-					<th width="310"><b>Item Name</b></th>
-					<th width="170"><b>Category</b></th>
-					<th width="140"><b>Quantity Available</b></th>
-				</tr>
-			</thead>
-			<tfoot>
-				<tr>
-					<td colspan="5"></td>
-				</tr>
-			</tfoot>
-			<tbody>';
-			
-			
-			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) 
-			{
-				echo '<tr>
-				  <td width="310"><b>' . $row['NAME'] . '</b></td>
-				  <td width="170">' . $row['CAT_NAME'] . '</td>
-				  <td width="125">' . $row['AVAILABLE'] . '</td>
-				</tr>';
-			}
-		echo '</tbody></table></div></div><br /><br />';	
+				if ($result = $mysqli->store_result()) 
+				{
+					while ($row = $result->fetch_row()) 
+					{
+						//printf("%s\n", $row[1]);
+						echo '<tr>
+							<td width="310"><b>' . $row[1] . '</b></td>
+							<td width="170">' . $row[5] . '</td>
+							<td width="125">' . $row[3] . '</td>
+						</tr>';
+					}
+				  $result->close();
+			   }
+		  } while ($mysqli->next_result());
+		}
+		else {
+		  echo "<p class='error'>Invalid Query</p>";
+		}		
 	}
 	
-	//free result and close db
-	mysqli_free_result ($result);
-	mysqli_close($dbc); 
+	echo '</tbody></table></div></div><br /><br />';
+	
+	
+	//close db
+	mysqli_close($mysqli); 
 	
 	//footer:
 	include ('./includes/footer.html');

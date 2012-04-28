@@ -14,14 +14,17 @@
 	include ('./includes/header.html');
 	echo "<h1>View All Items</h1>";	
 
-	//Connect & Query DB:
-	$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );		
-	$query = "SELECT * FROM ITEM ORDER BY NAME";	
-	$result = @mysqli_query ($dbc, $query); 	
+	//Connect to DB
+	$mysqli = new mysqli(HOST, USER, PASSWORD, DBNAME);
+	if (mysqli_connect_errno()) 
+	{
+		echo "<p class='error'>Connection failed, contact system administrator</p>";
+		exit();
+	}
 	
-	// If there is a report found
-	if($result)
-	{		
+	// query and display results
+	if ($mysqli->multi_query("SELECT * FROM ITEM ORDER BY NAME")) // CALL display_view('items_available'); doesn't seem to be working
+	{	
 		echo '	
 		<div class="outer">
 		<div class="innera">
@@ -40,25 +43,32 @@
 				</tr>
 			</tfoot>
 			<tbody>';
-		  
-			while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) 
+		do 
+		{
+			if ($result = $mysqli->store_result()) 
 			{
-				echo '<tr>
-					<td width="298"><b>' . $row['NAME'] . '</b></td>
-					<td width="150">' . $row['QUANTITY'] . '</td>
-					<td width="80">' . $row['AVAILABLE'] . '</td>
-					<td width="80">' . $row['CATEGORY_ID'] . '</td>
-				</tr>';
-			}
+				while ($row = $result->fetch_row()) 
+				{
+					echo '<tr>
+						<td width="298"><b>' . $row[1] . '</b></td>
+						<td width="150">' . $row[2] . '</td>
+						<td width="80">' . $row[3] . '</td>
+						<td width="70">' . $row[5] . '</td>
+					</tr>';
+				}
+			  $result->close();
+		   }
+		} while ($mysqli->next_result());
+	  
 		echo '</tbody></table></div></div><br /><br />';
-						
-	} else
+	}
+	else 
 	{
-		echo "<h2>View All Report currently empty</h2>";	
+	  echo "<h2>View All Report currently empty</h2>";
 	}
 	
 	//Close the db connection
-	mysqli_close($dbc); 
+	mysqli_close($mysqli); 
 	
 	//footer:
 	include ('./includes/footer.html');
