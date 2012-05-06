@@ -15,7 +15,7 @@
 	
 	echo '<h1>View Available Items</h1>';
 
-	//Connect to DB
+	//Connect & Query DB:	
 	$mysqli = new mysqli(HOST, USER, PASSWORD, DBNAME);
 	if (mysqli_connect_errno()) 
 	{
@@ -80,7 +80,6 @@
 	// if search has not been used, display all available items
 	if($displaySearchRes == 0)
 	{	
-		//query and display results
 		if ($mysqli->multi_query("SELECT * FROM items_available ORDER BY 'CATEGORY NAME', 'ITEM NAME';")) 
 		{	
 			do 
@@ -89,6 +88,7 @@
 				{
 					while ($row = $result->fetch_row()) 
 					{
+						//printf("%s\n", $row[1]);
 						echo '<tr>
 							<td width="310"><b>' . $row[1] . '</b></td>
 							<td width="170">' . $row[5] . '</td>
@@ -105,8 +105,7 @@
 		}				
 	} else 
 	{	
-		//query and display results
-		if ($mysqli->multi_query("CALL regex_search('$itemName');")) 
+		if ($mysqli->multi_query('CALL regex_search("ITEM", "NAME", "' . $itemName . '");')) 
 		{	
 			do 
 			{
@@ -133,7 +132,7 @@
 	echo '</tbody></table></div></div><br /><br />';
 	
 	
-	//close db
+	//free result and close db
 	mysqli_close($mysqli); 
 	
 	//footer:

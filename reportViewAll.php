@@ -23,7 +23,7 @@
 	}
 	
 	// query and display results
-	if ($mysqli->multi_query("SELECT * FROM ITEM ORDER BY NAME")) // CALL display_view('items_available'); doesn't seem to be working
+	if ($mysqli->multi_query("call select_all('all_items', 1, 1);"))
 	{	
 		echo '	
 		<div class="outer">
@@ -32,9 +32,9 @@
 			<thead> 
 				<tr align="left">
 					<th width="310"><b>Item Name</b></th>
-					<th width="140"><b>Quantity</b></th>
+					<th width="140"><b>Category Name</b></th>
 					<th width="80"><b>Available</b></th>
-					<th width="90"><b>Category ID</b></th>
+					<th width="90"><b>Quantity</b></th>
 				</tr>
 			</thead>
 			<tfoot>
@@ -50,10 +50,10 @@
 				while ($row = $result->fetch_row()) 
 				{
 					echo '<tr>
-						<td width="298"><b>' . $row[1] . '</b></td>
-						<td width="150">' . $row[2] . '</td>
+						<td width="298"><b>' . $row[0] . '</b></td>
+						<td width="150">' . $row[4] . '</td>
 						<td width="80">' . $row[3] . '</td>
-						<td width="70">' . $row[5] . '</td>
+						<td width="70">' . $row[2] . '</td>
 					</tr>';
 				}
 			  $result->close();
