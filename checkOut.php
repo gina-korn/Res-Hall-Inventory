@@ -13,7 +13,6 @@
 	include ('includes/header.html');
 	
 	echo '<h1>Item Check-Out</h1>';
-	echo '<p>This is an "under development" version of checkout, has a few post-checkout issues I\'m working on<p>';
 	
 	//clear order
 	if(isset($_GET['Reset_Order_Action']))
@@ -24,8 +23,13 @@
 	if(isset($_GET['confirmed_Item']))
 	{	
 		$_SESSION['showItem'] = true;
-	}					
-	
+	}
+
+	if(isset($_SESSION['submitMessage']))
+	{
+		print_r("<b>" . $_SESSION['submitMessage'] . "</b>");
+		unset($_SESSION['submitMessage']);
+	}
 	
 	// --------The order form for the current check out---------
 	echo '
@@ -75,10 +79,14 @@
 				<td>
 					';//print statement for Item. 
 					$showItem = $_SESSION['showItem'];
-					if((isset($_GET['confirm_Item']) || isset($_SESSION['item_Name'])) && $showItem != false)
+					if((isset($_GET['confirmed_Item'])) && $showItem != false)
 					{
-						$item_Name = $_SESSION['item_Name'];
-						echo $item_Name;
+						$myArray = explode("~", $_GET['confirmed_Item']);
+						$ITEM_ID = $myArray[0];
+						$ITEM_NAME = $myArray[1];
+						$_SESSION['item_Name'] = $ITEM_NAME;
+						$_SESSION['item_ID'] = $ITEM_ID;
+						echo $ITEM_NAME;
 					}
 					echo'
 				</td>
@@ -88,11 +96,12 @@
 					<input type="submit" name="Reset_Order_Action" value="Clear Order" />
 				</td>
 				<td>
-				';if(isset($_GET['confirm_Item']) )
-					{
-					echo'
-					<input type="submit" name="Checkout_Order_Action" value="Check Out" />';
-					}
+				';
+				if(isset($_GET['confirmed_Item']))
+				{
+					echo '<input type="submit" name="Checkout_Order_Action" value="Check Out" />';
+					echo '<input type="submit" name="Checkout_Order_Action" value="Check Out & Clear Order" />';
+				}
 				echo'	
 				</td>
 			</tr>
@@ -325,8 +334,7 @@
 									echo "</ul></p>";
 									
 									//A list of all items in allowed categories would be nice here?
-									
-														
+																
 								} else //package contains no entries
 								{ 
 									echo ", no additional checkouts permitted</p>";
@@ -337,17 +345,16 @@
 							{
 								echo "<p><b>$count.) $iName</b> checked out from category $cName</p>";
 								$checkedOutArray[] = $categoryID;
+								$_SESSION['displayItemSearch'] = true;
 												
 							}//end check for first item
 											
 						}//end while (items from checkout)
 						
 //For testing purposes
-//echo "Allowed array: ";
-//print_r($allowedArray);
-//echo "<br />Checked-out array: ";
-//print_r($checkedOutArray);
-//echo "<br />displayItemSearch: " . $_SESSION['displayItemSearch'];
+//print_r("Allowed array: " . $allowedArray);
+//print_r("<br />Checked-out array: " . $checkedOutArray . "<br />displayItemSearch: " . $_SESSION['displayItemSearch']);
+
 						
 						if($count > 0 && $_SESSION['remainingCheckouts'] != "none" && $_SESSION['displayItemSearch'] != false)
 						{
@@ -367,24 +374,29 @@
 								}//end outer if
 							}//end outer for
 							
-//echo "<br />Allowed array, in loop: ";
-//print_r($allowedArray);
+//print_r("<br />Allowed array, in loop: " . $allowedArray);
 							$_SESSION['remainingCheckouts'] = implode('#', $allowedArray);
+							
 						}//end if
 					
 					} else 
 					{
-						echo "<p>$resident_name can currently check out 1 item</p>";
-						$_SESSION['remainingCheckouts'] = "any";						
+						if($_SESSION['remainingCheckouts'] != "none")
+						{
+							echo "<p>$resident_name can currently check out 1 item</p>";
+							$_SESSION['remainingCheckouts'] = "any";
+						}
 					}
 				}//end admin check		
 			}//end overdue check
 		} else 
 		{ //user not eligible
-		
-			echo '<p class="error">This user currently has a hold on their account, please contact system administrator.</p>';
-			$_SESSION['remainingCheckouts'] = "none";
-			$_SESSION['displayItemSearch'] = false;			
+			if(isset($_GET['confirm_Resident']))
+			{
+				echo '<p class="error">This user currently has a hold on their account, please contact system administrator.</p>';
+				$_SESSION['remainingCheckouts'] = "none";
+				$_SESSION['displayItemSearch'] = false;
+			}
 		
 		}//end eligible check
 	
@@ -400,7 +412,7 @@
 					<input type="submit" name="submit" value="Find Item" />
 					<input type="hidden" name="getItem" value="1" />
 				</fieldset>
-			</form>';
+			</form><br /><br />';
 			
 			//sets the auto focus to the form above it. fill in form name and text box name
 			echo '
@@ -418,131 +430,167 @@
 		
 		
 	// ---------Adding an Item to Order---------------				
-	if((isset($_GET['getItem']) || $_SESSION['getItem'] == true) && !(isset($_GET['confirm_Item'])) && !(isset($_GET['Checkout_Order_Action'])) )
-	{
+	if((isset($_GET['getItem']) || $_SESSION['getItem'] == true) && !(isset($_GET['confirmed_Item'])) && !(isset($_GET['Checkout_Order_Action'])) && $_GET['getItem'] != 0)
+	{		
 		$_SESSION['getItem'] = true;
-		
-		// Make the connection:
-		$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );
-		
-		//get the item name from the form getItemName
-		$itemName = mysqli_real_escape_string($dbc, trim($_GET['item']));
 
-		// Make the query:
-		$q = "SELECT ITEM_ID, NAME, QUANTITY, AVAILABLE, CATEGORY_ID FROM ITEM WHERE NAME = " . "'". "$itemName" ."'";	//NEED STORED PROCEDURE	
-		$r = @mysqli_query ($dbc, $q); // Run the query.
-		$num = mysqli_num_rows($r);
-				
-		if ($num > 0)  // If result was returned:
+		//Check to make sure user is allowed to check out additional items
+		if($_SESSION['remainingCheckouts'] == "none")
 		{
-			$itemAllowed = 0; //0 for not allowed (default)
-			while ($row = mysqli_fetch_array($r, MYSQLI_ASSOC)) 
+			echo "<p class='error'>This user cannot check out any additional items.</p>";
+			$_SESSION['displayItemSearch'] = false;
+		}
+		else
+		{
+			//Connect & Query DB:	
+			$mysqli = new mysqli(HOST, USER, PASSWORD, DBNAME);
+			//get the item name from the form getItemName
+			$itemName = mysqli_real_escape_string($mysqli, trim($_GET['item']));
+			
+			if (mysqli_connect_errno()) 
 			{
-				$ITEM_ID = $row['ITEM_ID'];
-				$NAME = $row['NAME'];
-				$QUANTITY = $row['QUANTITY'];
-				$AVAILABLE = $row['AVAILABLE'];
-				$CATEGORY_ID = $row['CATEGORY_ID'];
-				
-			} // End of WHILE loop.
-						
-			mysqli_free_result ($r); // Free up the resources.	
-			mysqli_close($dbc); // Close the database connection.
-					
-			//Check to make sure user is allowed to check out additional items
-			if($_SESSION['remainingCheckouts'] == "none")
-			{
-				echo "<p class='error'>This user cannot check out any additional items.</p>";
-				$_SESSION['displayItemSearch'] = false;
+				echo "<p class='error'>Connection failed, contact system administrator</p>";
+				exit();
 			}
-			else
-			{
-				$_SESSION['displayItemSearch'] = true;
-				if($_SESSION['remainingCheckouts'] != "any")
-				{
-					//Here, the current item's category is being checked against user's 'allowed' categories
-					$allowedArray = explode('#', $_SESSION['remainingCheckouts']);
-					
-//echo "<br />allowedItems (post): ";
-//print_r($allowedArray);
-					for($i = 0; $i < count($allowedArray); $i++)
-					{
-						if($i % 2 == 0)
-						{
-							if(($allowedArray[$i] == $CATEGORY_ID) && ($allowedArray[$i + 1] > 0))
-							{
-								$itemAllowed = 1;
-							}//end if	
-						}//end if
-					}//end for				
-				}
-				else //user can check out an item from any category
-				{
-					$itemAllowed = 1;
-				}
+			
+			if ($mysqli->multi_query('CALL regex_search("items_available", "NAME", "' . $itemName . '");')) 
+			{	
 				
-				if($itemAllowed == 1)
+				if($result = $mysqli->store_result()) 
 				{
-				
-					//if user is allowed to check item out
-					$_SESSION['item_Name'] = $NAME;	
-					$_SESSION['$ITEM_ID'] = $ITEM_ID;
-					
 					//-------------- Have office worker confirm, right item--------------------
-					echo "
-					<br />
-						<form action='checkOut.php' method='GET'>
-							<fieldset class='forms'>				
-								<table>
-									<tr>
-										<td>  
-											<b>Item: </b>								
-										</td>
-										<td> $NAME </td>
-										<td>  
-											<b>Available for Check Out:</b>								
-										</td>
-										<td> $AVAILABLE </td>
-										<td>";
-											// item availability
-											if($AVAILABLE > 0)
-											{
-												echo'
-												<input type="submit" name="confirmed_Item" value="Add Item" />
-												<input type="hidden" name="confirm_Item" value="1" />';
-											}
-											else
-											{
-												echo '<p class="error"> ' . $NAME . ' is not currently available.</p>';
-												$_SESSION['showItem'] = false;
-											}
-											echo "
-										</td>
-									</tr>
-								</table>	
-							</fieldset>
-						</form>
-					<br />";
-				}
+					echo '	
+					<div class="outer">
+					<div class="innera">
+					<table id="itemsTable" class="tablesorter" cellspacing="0" cellpadding="0"> 
+						<thead> 
+							<tr align="left">
+								<th width="310"><b>Item Name</b></th>
+								<th width="170"><b>Category</b></th>
+								<th width="140"><b>Available</b></th>
+								<th width="140"><b>Add to Order</b></th>
+							</tr>
+						</thead>
+						<tfoot>
+							<tr>
+								<td colspan="5"></td>
+							</tr>
+						</tfoot>
+						<tbody><form action="checkOut.php" method="GET" name = "getItemName">';
+						
+						$countItems = 0;
+						$count = 0;
+						while ($row = $result->fetch_row()) 
+						{
+							$count++;
+							$itemAllowed = 0;
+							$ITEM_ID = $row[0];
+							$NAME = $row[1];
+							$QUANTITY = $row[2];
+							$AVAILABLE = $row[3];
+							$CATEGORY_NAME = $row[5];
+							$CATEGORY_ID = $row[6];
+							
+							$itemInfo[] = $ITEM_ID;
+							$itemInfo[] = $NAME;
+							//print_r($itemInfo);
+							$myData = implode('~', $itemInfo);
+							
+							
+							if($_SESSION['remainingCheckouts'] != "any")
+							{
+								//Here, the current item's category is being checked against user's 'allowed' categories
+								// (if there categories are limited by a package)
+								$allowedArray = explode('#', $_SESSION['remainingCheckouts']);
+//print_r("In if: " . $allowedArray);									
+
+								for($i = 0; $i < count($allowedArray); $i++)
+								{
+									if($i % 2 == 0)
+									{
+										if(($allowedArray[$i] == $CATEGORY_ID) && ($allowedArray[$i + 1] > 0))
+										{
+//echo "Item Allowed<br />";												
+											$itemAllowed = 1;
+										}//end if	
+									}//end if
+								}//end for	
+								
+							}//end remaining checkouts if
+							
+//print_r("Remaining checkouts: " . $_SESSION['remainingCheckouts'] . "  Item Allowed?: " . $itemAllowed);
+							
+							
+							if(($_SESSION['remainingCheckouts'] == "any" || $itemAllowed == 1))
+							{
+								$countItems++;
+								echo "
+								<tr>
+									<td width='265'><b> $NAME </b></td>
+									<td width='160'> $CATEGORY_NAME </td>
+									<td width='140'> $AVAILABLE </td>
+									<td width='100'>";
+										// item availability
+										if($AVAILABLE > 0)
+										{
+											echo '
+											<button class="buttons" name="confirmed_Item" id="confirmed_Item" value="' . $myData .'">
+											<img src="./images/redCheckSmall.png" length="20" width="20" /></button>';
+											//<input type="submit" name="confirmed_Item" value="Add Item" />
+											//<input type="hidden" name="confirm_Item" value="1" />
+										}
+										else
+										{
+											echo '<p class="error"> ' . $NAME . ' is not available.</p>';
+											$_SESSION['showItem'] = false;
+										}
+										echo "
+									</td>
+								</tr>";
+								
+							}//end check for displaying item (if)
+							unset($itemInfo);
+							
+						}//end while through items
+					
+					if($count == 0)
+					{
+						echo "<tr><td colspan = 4 width ='620'><p class=error>No available item exists matching that name</p></td></tr>";
+					}
+					if($count > 0 && $countItems == 0)
+					{
+						echo "<tr><td colspan = 4 width ='620'><p class=error>No items found in an allowed category(s)</p></td></tr>";
+					}
+					
+					$_SESSION['showItem'] = true;
+					echo '</form></tbody></table></div></div><br /><br />';
+					$result->close();
+				} 
 				else
 				{
-					echo "<p class='error'>Item checkout not allowed from this category</p> <i>(should include list of valid categories or items here)</i>";
-					$_SESSION['showItem'] = false;
+					if($_GET['getItem'] != 0)
+					{
+						echo '<p class="error">No item exists with that name.</p>';
+					}
+					$_SESSION['showItem'] = false;						
 				}
-			}//end remainingCheckouts else
-		}
-		else // If no records were returned.
-		{ 
-			echo '<p class="error">* No item exists with that name.</p>';
-		}	
+			}
+			else 
+			{
+			  echo "<p class='error'>Invalid Query</p>";
+			}//end regex_search query
+			
+		}//end remaining checkouts if/else
+
 	}//end add item
 
 										//-------------Checking Out Item---------------------
-	if(isset($_GET['Checkout_Order_Action']) && isset($_SESSION['$ITEM_ID']))
+	if(isset($_GET['Checkout_Order_Action']) && isset($_SESSION['item_ID']))
 	{
+		echo "got here";
 		$UserAction = $_GET['Checkout_Order_Action'];
 		
-		if($UserAction == 'Check Out')
+		if($UserAction == 'Check Out' || $UserAction == "Check Out & Clear Order")
 		{
 				// Make the connection:
 				$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );
@@ -567,7 +615,7 @@
 				$studentID = $_SESSION['$STUDENT_ID'];
 //echo $studentID; //**************************************************************************************************
 				$OW_ID = $_SESSION['OW_ID'];
-				$item_ID = $ITEM_ID = $_SESSION['$ITEM_ID'];
+				$item_ID = $ITEM_ID = $_SESSION['item_ID'];
 				
 				$admin = $_SESSION['$admin'];
 				$orderNum = 0;
@@ -589,31 +637,41 @@
 				mysqli_free_result ($r); // Free up the resources.	
 				$type = 'checkout';
 								
-				echo 'orderNum' . $orderNum . "<br />studentID" . $studentID . "<br />itemID " . $item_ID; 
+//echo 'orderNum' . $orderNum . "<br />studentID" . $studentID . "<br />itemID " . $item_ID; 
 				
 				$q = "call check_out($orderNum ," . '"' . $resident_id .'"' . ", $item_ID);";
 				$r =  @mysqli_query($dbc, $q);
 				
-				//$fail = $r;
+//$fail = $r;
 				if(!$r)
 				{
-					echo '<p class = "error">Check out failed, please contact your system administrator.</p>';
-					$_SESSION['displayItemSearch'] = false;
+					$_SESSION['submitMessage'] = '<p class = "error">Check out failed, please contact your system administrator.</p>';
+					//$_SESSION['displayItemSearch'] = false;
 				}
 				else
 				{
-					echo '<p>Check out Successfull</p>';
-					$_SESSION['displayItemSearch'] = true;
+					$_SESSION['submitMessage'] = '<p>Check out Successfull</p>';
+					//$_SESSION['displayItemSearch'] = true;
 				}
+
 				
 				//mysqli_free_result ($r); // Free up the resources.	
 				mysqli_close($dbc); // Close the database connection.
-				clearItemInfo();
+				if($UserAction == "Check Out & Clear Order")
+				{
+					clearSession();
+				}
+				else
+				{
+					clearItemInfo();
+				}
+				
+				
+				
 				//This forces a page refresh, so that the checked out item shows up on the page without the user needing to do a 
 				//manual refresh
 				echo "<script language=javascript>window.location.reload()</script>";
-				
-
+					
 		}
 		//echo $nameSet;
 	}	
@@ -625,7 +683,7 @@ function clearItemInfo()
 	unset($_SESSION['getItem']);
 	unset($_SESSION['item_Name']);	
 	unset($_SESSION['showItem']);
-	unset($_SESSION['$ITEM_ID']);
+	unset($_SESSION['item_ID']);
 	unset($_GET['Checkout_Order_Action']);
 		
 }//end clear session
@@ -634,6 +692,7 @@ function clearSession()
 {
 	unset($_SESSION['getItem']);
 	unset($_SESSION['item_Name']);
+	unset($_SESSION['item_ID']);
 	unset($_SESSION['showItem']);	
 	unset($_SESSION['confirm_Resident']);
 	unset($_SESSION['confirmed_Resident']);
@@ -646,14 +705,23 @@ function clearSession()
 	unset($_SESSION['remainingCheckouts']);
 	unset($_GET['confirm_Resident']);
 	unset($_GET['confirm_Item']);	
-	unset($_GET['confirm_Item']);
 	unset($_GET['Checkout_Order_Action']);	
 	unset($_SESSION['displayItemSearch']);
 	unset($_SESSION['sid']);
 	
+	
+	$_SESSION['displayItemSearch'] == false;
+	$_SESSION['confirmed_Resident'] = false;
 	$_SESSION['confirm_Resident'] = false;
 	$_SESSION['clearPage'] = true;
 	
 }//end clear session
 
 ?>
+<script type="text/javascript" id="js">
+$(document).ready(function() 
+    { 
+        $("#itemsTable").tablesorter({widgets: ['zebra']});
+    } 
+); 
+</script>

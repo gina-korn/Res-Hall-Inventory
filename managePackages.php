@@ -105,12 +105,12 @@
 			
 			$packageID = $_POST['packageID'];
 			$categoryID = $_POST['categoryID'];
-			$allowDups = $_POST['allowDups'];
+			//$allowDups = $_POST['allowDups'];
 			
 			// Need to make sure caterory isn't already in package
 			if (empty($errorArray)) 
 			{
-				$query = "SELECT CATEGORY_ID, PACKAGE_ID FROM PACKAGE_ENTRY;";
+				$query = "SELECT CATEGORY_ID, PACKAGE_ID FROM PACKAGE_ENTRY;"; // change to display_view(package_entry)
 				$result = @mysqli_query ($dbc, $query);
 				
 				while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) 
@@ -126,19 +126,19 @@
 			if (empty($errorArray)) 
 			{ 
 				//I'm just going to set the package_entry name to the category name for now
-				$query = "SELECT NAME FROM CATEGORY WHERE CATEGORY_ID = '$categoryID' LIMIT 1;";
+				$query = "SELECT NAME FROM CATEGORY WHERE CATEGORY_ID = '$categoryID' LIMIT 1;"; // already covered in category procs
 				$result = @mysqli_query ($dbc, $query);
 				$row = mysqli_fetch_array($result, MYSQLI_ASSOC);
-				$catName = $row['NAME'];
+				$cName = $row['NAME'];
 				
 				// Insert
 				$query = "INSERT INTO PACKAGE_ENTRY (NAME, CATEGORY_ID, PACKAGE_ID, QUANTITY) VALUES 
-					('$catName', '$categoryID', '$packageID', '$itemLimit');";		
+					('$cName', '$categoryID', '$packageID', '$itemLimit');";		
 				$result = @mysqli_query ($dbc, $query);
 				
 				if ($result) 
 				{
-					echo "<p><b>$catName has successfully been added.</b></p>";	
+					echo "<p><b>$cName has successfully been added.</b></p>";	
 					
 				} else 
 				{
@@ -317,7 +317,7 @@
 							<select id="categoryID" name="categoryID">
 							<optgroup label="Available Categories">';
 					   
-								$query = "SELECT CATEGORY_ID, NAME FROM CATEGORY ORDER BY NAME;";		
+								$query = "SELECT CATEGORY_ID, NAME FROM CATEGORY ORDER BY NAME;"; // use display_view()	
 								$r = @mysqli_query ($dbc, $query); 
 								
 								while ($row2 = mysqli_fetch_array($r, MYSQLI_ASSOC)) 
@@ -335,7 +335,7 @@
 						<td>
 							<select id="packageID" name="packageID">
 							<optgroup label="Available Packages">';								
-								$query = "SELECT * FROM PACKAGE ORDER BY package_name;";		
+								$query = "SELECT * FROM PACKAGE ORDER BY package_name;"; // use display_view()	 	
 								$r = @mysqli_query ($dbc, $query); 
 								
 								while ($row3 = mysqli_fetch_array($r, MYSQLI_ASSOC)) 
@@ -356,18 +356,13 @@
 					</tr>
 					<tr>
 						<td>
-							<b>Allow Duplicates?</b>								
-						</td>
-						<td>
-							<input type="radio" name="allowDups" value="yes"> Yes
-							<input type="radio" name="allowDups" value="no" checked> No (not in use)									
-						</td>
-						<td>
-							<b>Item Limit</b>							
+							<b>Item Limit</b>								
 						</td>
 						<td>
 							<input type="text" name="itemLimit" id="itemLimit" size="5" value="" />									
 						</td>
+						<td></td>
+						<td></td>
 					</tr>
 					<tr>
 						<td>
@@ -445,7 +440,7 @@
 		echo '<br /><br />';	
 		
 		// Edit / Delete Form 
-		$q = 'SELECT * FROM PACKAGE ORDER BY package_name;';	
+		$q = 'SELECT * FROM PACKAGE ORDER BY package_name;'; // use display_view()	
 		$r = @mysqli_query ($dbc, $q);
 		$numRows = mysqli_num_rows($r);
 		if ($numRows > 0) 
