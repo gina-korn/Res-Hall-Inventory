@@ -1,0 +1,122 @@
+This is a listing of all procedures in the database and their usage --Still In Progress
+
+******************************************************************************************
+GENERAL PROCEDURES
+******************************************************************************************
+
+regex_search
+PARAMETERS
+	TABLENAME VARCHAR(15)			--The table you wish to search
+	COLUMN_NAME VARCHAR(15)			--The column to perform the search on
+	ITEM_NAME VARCHAR(11)			--the keyword
+	
+select_all
+PARAMETERS
+	TABLENAME VARCHAR(15)			--The table you wish to select from
+	COL VARCHAR(15), 				--The column you wish to select against
+	COMP VARCHAR(25)				--What you want to select
+	
+
+
+delete_row
+PARAMETERS
+	TABLENAME VARCHAR(15)			--The table you wish to delete from
+	COL VARCHAR(15)					--The column you wish to search
+	COMP VARCHAR(25)				--The value you want to delete
+	
+	
+******************************************************************************************
+PACKAGE PROCEDURES
+******************************************************************************************
+insert_package
+PARAMETERS
+	PACK_NAME VARCHAR(15))			--The package name you want to insert
+	
+insert_package_entry
+PARAMETERS
+	ENTRY_NAME VARCHAR(20)			--The name of the category that is being linked
+	CAT_ID INT(11) 					--The Id of the category being linked
+	PACK_ID INT(11)					--The package we are linking to
+	QUANTITY INT(3))				--How many items from this category are allowed 
+										to be checked out
+
+update_package
+PARAMETERS
+	PACK_NAME VARCHAR(15)			--The name you want to changed the package to
+	PACK_ID INT(11)					--The package you want to update
+	
+delete_package
+PARAMETERS
+	PACK_ID INT(11)					--The Package to be deleted
+
+******************************************************************************************
+CATEGORY PROCEDURES
+******************************************************************************************
+
+insert_category
+PARAMETERS
+	CATEGORY_NAME VARCHAR(20)		--The name of the category
+	CHECKOUT_LENGTH INT(2))			--How Long it is allowed to be checked out
+	
+delete_category
+PARAMETERS
+	CAT_ID INT(2))					--The category you want to delete
+	
+update_category
+PARAMETERS
+	CAT_ID INT(11)					--The category you want to update
+	CAT_NAME VARCHAR(20)			--what you want to change the name to
+	CAT_PER INT(11)					--what you want the permissions to be
+	CHECK_LEN INT(2))				--how long you want the item to be checked out for (do we even use this? like at all?)
+	
+	
+******************************************************************************************
+CHECK_IN PROCEDURES
+******************************************************************************************
+
+check_in
+PARAMETERS:
+	ORDER_ID INT					--The order you are checking in
+	ITEM INT						--The item you are checking in
+	DAMAGED TINYINT					--Whether the item is damaged, 0 undamaged, 
+ 														   			1 damaged, 
+ 														   			2 broken (act. hold)
+ 														   			
+ 														   		
+******************************************************************************************
+CHECK_OUT PROCEDURES
+******************************************************************************************
+
+check_out
+PARAMETERS
+ 	ORDER_ID INT					--The order you are checking out	
+ 	STUDENT INT						--The student you are checking out to
+ 	ITEM INT						--The item you are checking out
+ 	DATE_OUT DATETIME				--The Current date
+ 	DATE_DUE DATETIME				--The date the item is due (defaults to 1 day)
+ 	STATUS INT						--No longer needed, remove
+
+******************************************************************************************
+RESERVE PROCEDURES
+******************************************************************************************
+
+reserve
+PARAMETERS
+	ORDER_ID INT					--the order number for the reservation
+	STUDENT INT						--the student doing the reservation
+	ITEM INT						--The item being reserved
+	DATE_OUT DATETIME				--The start of the reservation
+	DATE_DUE DATETIME				--The end of the reservation
+	OUT STATUS INT					--A status variable, pass @stat to it
+	
+
+******************************************************************************************
+USER MANAGEMENT PROCEDURES
+******************************************************************************************
+									
+add_or_remove_hold
+PARAMETERS
+	STUDENT_ID VARCHAR				--The MD5 hash of the student id
+	SWITCH TINYINT					--0 to remove a hold, 1 to add one
+
+  			
