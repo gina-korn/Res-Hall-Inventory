@@ -334,7 +334,7 @@
 							}
 						} else //additional items, just display the item name and package it is from
 						{
-							echo "<p><b>$count.) $iName</b> checked out from category $cName</p>";
+							echo "<p><b>$count.) $iName</b> checked out from category <b>$cName</b></p>";
 							$checkedOutArray[] = $categoryID;
 							$_SESSION['displayItemSearch'] = true;
 											
@@ -346,7 +346,7 @@
 //echo "1st allowed array: "; print_r($allowedArray);
 //echo "<br />1st checked-out array: "; print_r($checkedOutArray);
 
-					if($count > 0 && $_SESSION['remainingCheckouts'] != "none" && $_SESSION['displayItemSearch'] != false)
+					if($count > 0 && $_SESSION['remainingCheckouts'] != "none")
 					{
 						//allowedArray contains pairs of numbers, a category ID followed by a quantity
 						//Here the quantity is being decremented according to what has already been checked out
@@ -362,11 +362,16 @@
 									}//end inner if
 								}//end inner for
 							}//end outer if
-						}//end outer for						
+						}//end outer for
+						$_SESSION['remainingCheckouts'] = @implode('#', $allowedArray);
 					}//end if
 					
 //echo "<br />Allowed array, before implode: ";	print_r($allowedArray);
-					$_SESSION['remainingCheckouts'] = implode('#', $allowedArray);
+				if($_SESSION['remainingCheckouts'] != "none" && $_SESSION['remainingCheckouts'] != "any")
+				{	
+					unset($_SESSION['remainingCheckouts']);
+					$_SESSION['remainingCheckouts'] = @implode('#', $allowedArray);
+				}
 				
 				} else 
 				{
@@ -392,22 +397,39 @@
 		//if there are no "errors", present user with item checkout form (user allowed to checkout additional items)
 		if($_SESSION['remainingCheckouts'] != "none" || $_SESSION['displayItemSearch'] == true)
 		{
-			//Grabs item based off of item name
-			echo'
-			<form action="checkOut.php" method="GET" name = "getItemName">
-				<fieldset class="forms">
-					<label for="item">Item Name: </label> <input type="text" name="item" id="item_name" value="';
-						if(isset($_GET['item'])) echo $_GET['item']; echo'" />
-					<input type="submit" name="submit" value="Find Item" />
-					<input type="hidden" name="getItem" value="1" />
-				</fieldset>
-			</form><br /><br />';
+			$allowedCount = 1;
+			if($_SESSION['remainingCheckouts'] != "any")
+			{
+				$checkArray = @explode('#', $_SESSION['remainingCheckouts']);
+				$allowedCount = 0;
+				for($i = 0; $i < count($checkArray); $i++)
+				{
+					if($i % 2 != 0)
+					{
+						$allowedCount += $allowedArray[$i];
+					}//end outer if
+				}//end outer for
+			}
 			
-			//sets the auto focus to the form above it. fill in form name and text box name
-			echo '
-			<script type="text/javascript" language="JavaScript">
-				document.forms["getItemName"].elements["item"].focus();
-			</script>';
+			if($allowedCount > 0)
+			{
+				//Grabs item based off of item name
+				echo'
+				<form action="checkOut.php" method="GET" name = "getItemName">
+					<fieldset class="forms">
+						<label for="item">Item Name: </label> <input type="text" name="item" id="item_name" value="';
+							if(isset($_GET['item'])) echo $_GET['item']; echo'" />
+						<input type="submit" name="submit" value="Find Item" />
+						<input type="hidden" name="getItem" value="1" />
+					</fieldset>
+				</form><br /><br />';
+				
+				//sets the auto focus to the form above it. fill in form name and text box name
+				echo '
+				<script type="text/javascript" language="JavaScript">
+					document.forms["getItemName"].elements["item"].focus();
+				</script>';
+			}
 			
 		} else { //the user is not allowed to check out any more items
 				
@@ -453,8 +475,7 @@
 				{
 					//-------------- Have office worker confirm, right item--------------------
 					echo '	
-					<div class="outer">
-					<div class="innera">
+					<div class="border">
 					<table id="itemsTable" class="tablesorter" cellspacing="0" cellpadding="0"> 
 						<thead> 
 							<tr align="left">
@@ -464,11 +485,6 @@
 								<th width="140"><b>Add to Order</b></th>
 							</tr>
 						</thead>
-						<tfoot>
-							<tr>
-								<td colspan="5"></td>
-							</tr>
-						</tfoot>
 						<tbody><form action="checkOut.php" method="GET" name = "getItemName">';
 						
 						$countItems = 0;
@@ -491,6 +507,7 @@
 														
 							if($_SESSION['remainingCheckouts'] != "any")
 							{
+								
 								//Here, the current item's category is being checked against user's 'allowed' categories
 								// (if there categories are limited by a package)
 								for($i = 0; $i < count($aArray); $i++)
@@ -507,6 +524,7 @@
 							}//end remaining checkouts if
 						
 //echo "<br />Remaining checkouts: "; print_r($_SESSION['remainingCheckouts']); echo "<br />Item Allowed?: " . $itemAllowed;							
+							
 							
 							if(($_SESSION['remainingCheckouts'] == "any" || $itemAllowed == 1))
 							{
@@ -549,7 +567,7 @@
 					}
 					
 					$_SESSION['showItem'] = true;
-					echo '</form></tbody></table></div></div><br /><br />';
+					echo '</form></tbody></table></div><br /><br />';
 					$result->close();
 				} 
 				else
@@ -573,9 +591,9 @@
 										//-------------Checking Out Item---------------------
 	if(isset($_GET['Checkout_Order_Action']) && isset($_SESSION['item_ID']))
 	{
-		$UserAction = $_GET['Checkout_Order_Action'];
+		$UserAction = trim($_GET['Checkout_Order_Action']);
 		
-		if($UserAction == 'Check Out' || $UserAction == "Check Out & Clear Order")
+		if($UserAction == 'Check Out' || $UserAction == "Check Out & Clear Form")
 		{
 				// Make the connection:
 				$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );
@@ -638,13 +656,13 @@
 				}
 	
 				mysqli_close($dbc); // Close the database connection.
-				if($UserAction == "Check Out & Clear Order")
+				if($UserAction == "Check Out & Clear Form")
 				{
 					clearSession();
 				}
 				else
 				{
-					clearItemInfo();
+					clearItemInfo();					
 				}
 								
 				//This forces a page refresh, so that the checked out item shows up on the page without the user needing to do a 
