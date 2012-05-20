@@ -9,9 +9,12 @@
         <link href="css/smoothness/jquery-ui-1.8.18.custom.css" type="text/css" rel="stylesheet" />
 		<script src="js/jquery-1.7.1.min.js" type="text/javascript"></script>
 		<script src="js/jquery-ui-1.8.18.custom.min.js" type="text/javascript"></script>
-		<script language="javascript" src="js/calendar.js"></script>
+		<script src="js/jquery.js" type= "text/javascript" ></script>
+		
         <!-- From http://tablesorter.com/ jquery tablesorter by Christian Bach -->
         <script type="text/javascript" src="js/jquery.tablesorter.js"></script> 
+		
+		
     </head>
     
     <body>
@@ -34,7 +37,19 @@
                     <a href="reserveItem.php">Reserve Item</a>
                 </li>
                 <li>
-                    <a href="viewAvailable.php">View Available</a>
+                    
+					<a href="#">View</a>
+                
+                        <ul>
+                            <li><a href="viewAvailable.php">View Available</a></li>
+                            <li><a href="reserveItemCalendar.php">View Calendar</a></li>
+							<?
+							if($_SESSION['isAdmin'] == 1)
+							{
+								echo '<li><a href="viewReports.php">View Reports</a></li>';
+							}
+							?>
+                        </ul>
                 </li>
                 
                 <?php
@@ -74,6 +89,7 @@
                         <p><a href="reportCheckedOut.php">Currently checked out items</a></p>
                         <p><a href="reportViewAll.php">View all items</a></p>
                     	<p><a href="reportPopularCategories.php">Popular Categories</a></p>
+                        <p><a href="mostCheckedOut.php">Popular Items</a></p>
                         <p><a href="reportDamagedItems.php">Damaged Items</a></p>
                         <p><a href="report24HourRes.php">Reservations in the next 24 hr</a></p>
                         <p><a href="reportAllReservations.php">All item reservations</a></p>

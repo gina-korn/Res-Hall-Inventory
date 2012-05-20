@@ -58,13 +58,39 @@
 			// but this check only needs to be made if a valid name has been entered 
 			if (empty($errorArray)) 
 			{ 
-				$q = "SELECT * FROM CATEGORY WHERE NAME = '$categoryName';";	
-				$r = @mysqli_query ($dbc, $q);
-				$numRows = mysqli_num_rows($r);
-				if ($numRows > 0) 
-				{ 
-					$errorArray[] = 'Category name already in use, please re-enter';
+				//Connect to and query db
+				$mysqli = new mysqli(HOST, USER, PASSWORD, DBNAME);
+				if (mysqli_connect_errno()) 
+				{
+					echo "<p class='error'>Connect failed, please contact your system administrator</p>";
+					exit();
 				}
+				if ($mysqli->multi_query('call select_all(\'CATEGORY\', \'NAME\', \'' . "$categoryName" . '\');')) 
+				{
+					$num = 0;
+					do 
+					{
+						if ($result = $mysqli->store_result()) 
+						{
+							while ($row = $result->fetch_row()) 
+							{
+							   $num++;
+							}
+						  $result->close();
+						}
+					}while ($mysqli->next_result());
+					if($num > 0)
+					{
+						$errorArray[] = 'Category name already in use, please re-enter';
+					}				  
+				}
+				else 
+				{
+				  //printf("<br />Error: %s\n", $mysqli->error);
+				  $errorArray[] = 'Error, please contact your system administrator';
+				}//end query if/else
+				mysqli_close($mysqli);
+				
 			}// end if errors
 			
 			// No errors, add new category
@@ -93,13 +119,38 @@
 			$catID = $_POST['catDelete'];
 			
 			// Need to make sure category is empty before delete
-			$q = "SELECT * FROM ITEM WHERE CATEGORY_ID = '$catID';";	
-			$r = @mysqli_query ($dbc, $q);
-			$numRows = mysqli_num_rows($r);
-			if ($numRows > 0) 
-			{ 
-				$errorArray[] = 'Error! Category must be empty, please remove items first.';
+			//Connect to and query db
+			$mysqli = new mysqli(HOST, USER, PASSWORD, DBNAME);
+			if (mysqli_connect_errno()) 
+			{
+				echo "<p class='error'>Connect failed, please contact your system administrator</p>";
+				exit();
 			}
+			if ($mysqli->multi_query('call select_all(\'ITEM\', \'CATEGORY_ID\', \'' . "$catID" . '\');')) 
+			{
+				$num = 0;
+				do 
+				{
+					if ($result = $mysqli->store_result()) 
+					{
+						while ($row = $result->fetch_row()) 
+						{
+						   $num++;
+						}
+					  $result->close();
+					}
+				}while ($mysqli->next_result());
+				if($num > 0)
+				{
+					$errorArray[] = 'Error! Category must be empty, please remove items first.';
+				}
+			}
+			else 
+			{
+				//printf("<br />Error: %s\n", $mysqli->error);
+				$errorArray[] = 'Error, please contact your system administrator';
+			}//end query if/else
+			mysqli_close($mysqli);
 		
 			// No errors, delete category
 			if (empty($errorArray)) 
@@ -127,23 +178,45 @@
 		
 		if($submitVal == 3) //edit category (post)
 		{							
-			//because I'm doing an edit, cat name will always already be in use, but we don't want 2 categories w/ the same name...
 			if (empty($errorArray)) 
-			{ 
-				$q = "SELECT * FROM CATEGORY WHERE NAME = '$categoryName';";	
-				$r = @mysqli_query ($dbc, $q);
-				$numRows = mysqli_num_rows($r);
-				if ($numRows > 0) 
-				{ 
-					$row = mysqli_fetch_array($r, MYSQLI_ASSOC);
-					$newCat = $row['CATEGORY_ID'];
-					// ...so I'm checking the original category ID against that of the new category name, if they are different error is thrown
-					// but if they are the same, the edit can go forward
-					if($newCat != $catID)
-					{
-						$errorArray[] = 'Category name already in use, please re-enter';	
-					}
+			{ 			
+				//Connect to and query db
+				$mysqli = new mysqli(HOST, USER, PASSWORD, DBNAME);
+				if (mysqli_connect_errno()) 
+				{
+					echo "<p class='error'>Connect failed, please contact your system administrator</p>";
+					exit();
 				}
+				//because I'm doing an edit, cat name will always already be in use, but we don't want 2 categories w/ the same name...
+				if ($mysqli->multi_query('call select_all(\'CATEGORY\', \'NAME\', \'' . "$categoryName" . '\');')) 
+				{
+					$num = 0;
+					do 
+					{
+						if ($result = $mysqli->store_result()) 
+						{
+							while ($row = $result->fetch_row()) 
+							{
+								$newCat = $row[0];
+								// ...so I'm checking the original category ID against that of the 
+								// new category name, if they are different error is thrown
+								// but if they are the same, the edit can go forward
+								if($newCat != $catID)
+								{
+									$errorArray[] = 'Category name already in use, please re-enter';	
+								}
+							}
+							$result->close();
+						}
+					}while ($mysqli->next_result());
+				}
+				else 
+				{
+					//printf("<br />Error: %s\n", $mysqli->error);
+					$errorArray[] = 'Error, please contact your system administrator';
+				}//end query if/else
+				mysqli_close($mysqli);
+
 			}// end if errors
 			
 			// No errors, edit category
@@ -197,47 +270,70 @@
 		{
 			$catID = $_POST['catEdit'];
 		}
-		
-		$query = "SELECT * FROM CATEGORY WHERE CATEGORY_ID = $catID;";		
-		$r = @mysqli_query ($dbc, $query);
-		$row = mysqli_fetch_array($r, MYSQLI_ASSOC);
-		
-		echo '
-		<form action="manageCategories.php" method="POST" name="editCategoryForm">
-			<fieldset class="forms">
-				<legend><h2>Edit</h2></legend>									
-				<table>
-					<tr>
-						<td>  
-							<label for="name"><b>Category Name</b></label>								
-						</td>
-						<td>
-							<input type="text" name="categoryName" id="categoryName" value="' . $row['NAME'] . '" /> 
-							<input type="hidden" name="catID" value="' . $row['CATEGORY_ID'] . '" /> 			
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<label for="quantityAvail"><b>Checkout Length (number of days)</b></label>	
-						</td>
-						<td>
-							<input type="text" name="checkoutLength" id="checkoutLength" value="' . $row['checkout_length'] . '" />	 
-							(Leave blank for unlimited)
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<input type="submit" name="editCat" value="Submit Changes" />
-							<input type="hidden" name="submitted" value="3" />						
-						</td>
-						<td></td>
-					</tr>
-				</table>
-			</fieldset>
-		</form>	
-		<br /><br />';
-		
+	
+		//Connect to and query db
+		$mysqli = new mysqli(HOST, USER, PASSWORD, DBNAME);
+		if (mysqli_connect_errno()) 
+		{
+			echo "<p class='error'>Connect failed, please contact your system administrator</p>";
+			exit();
+		}
+		if ($mysqli->multi_query('call select_all(\'CATEGORY\', \'CATEGORY_ID\', \'' . "$catID" . '\');')) 
+		{
+			$num = 0;
+			do 
+			{
+				if ($result = $mysqli->store_result()) 
+				{
+					while ($row = $result->fetch_row()) 
+					{
+						echo '
+						<form action="manageCategories.php" method="POST" name="editCategoryForm">
+							<fieldset class="forms">
+								<legend><h2>Edit</h2></legend>									
+								<table>
+									<tr>
+										<td>  
+											<label for="name"><b>Category Name</b></label>								
+										</td>
+										<td>
+											<input type="text" name="categoryName" id="categoryName" value="' . $row[1] . '" /> 
+											<input type="hidden" name="catID" value="' . $row[0] . '" /> 			
+										</td>
+									</tr>
+									<tr>
+										<td>
+											<label for="quantityAvail"><b>Checkout Length (number of days)</b></label>	
+										</td>
+										<td>
+											<input type="text" name="checkoutLength" id="checkoutLength" value="' . $row[3] . '" />	 
+											(Leave blank for unlimited)
+										</td>
+									</tr>
+									<tr>
+										<td>
+											<input type="submit" name="editCat" value="Submit Changes" />
+											<input type="hidden" name="submitted" value="3" />						
+										</td>
+										<td></td>
+									</tr>
+								</table>
+							</fieldset>
+						</form>	
+						<br /><br />';   
+					}
+					$result->close();
+				}
+			}while ($mysqli->next_result());
+		}
+		else 
+		{
+			//printf("<br />Error: %s\n", $mysqli->error);
+			$errorArray[] = 'Error, please contact your system administrator';
+		}//end query if/else
+		mysqli_close($mysqli);
 		exit();	
+		
 	}// end of edit form		
 
 	if($pageType == 'add')
@@ -282,7 +378,7 @@
 	echo '<br /><br />';	
 	
 	// Edit / Delete Form 
-	$q = 'SELECT * FROM CATEGORY ORDER BY NAME;';	
+	$q = 'SELECT * FROM CATEGORY ORDER BY NAME;';//will the select_all proc work here if I leave out the match?	
     $r = @mysqli_query ($dbc, $q);
 	$numRows = mysqli_num_rows($r);
 	if ($numRows > 0) 
