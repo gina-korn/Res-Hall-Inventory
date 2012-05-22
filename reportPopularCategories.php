@@ -53,11 +53,10 @@
 		echo "<h2>There are currently no popular categories</h2>";	
 	}
 	
+	
 	//Close the db connection
 	mysqli_close($dbc); 
 	
-	//footer:
-	include ('./includes/footer.html');
 ?>
 
 <script type="text/javascript" id="js">
@@ -68,3 +67,86 @@ $(document).ready(function()
 ); 
 
 </script>
+
+
+<!--  PIE CHART -->
+
+
+		<script type="text/javascript">
+$(function () {
+    var chart;
+    $(document).ready(function() {
+        chart = new Highcharts.Chart({
+            chart: {
+                renderTo: 'container',
+                plotBackgroundColor: '#F7F0D3',
+                plotBorderWidth: null,
+                plotShadow: false,
+				backgroundColor: '#F7F0D3'
+            },
+            title: {
+                text: 'Popular Categories'
+            },
+            tooltip: {
+                formatter: function() {
+                    return '<b>'+ this.point.name +'</b>: ' + (Math.round(this.percentage*1)/1) + '%';
+                }
+            },
+			credits: {
+				enabled: false
+			},
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: false
+                    },
+                    showInLegend: true
+                }
+            },
+            series: [{
+                type: 'pie',
+                name: 'Popular Categories',
+                data: [
+                    <?php
+					
+						$dbc = @mysqli_connect (HOST, USER, PASSWORD, DBNAME) OR die ('Could not connect to MySQL: ' . mysqli_connect_error() );		
+						$query = "SELECT * FROM popular_categories ORDER BY name";
+						$result = @mysqli_query ($dbc, $query); 
+						$numRows = @mysqli_num_rows($result);
+						
+						while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) 
+						{
+							$name = str_replace("'", "\'", $row["name"]);
+							
+							if ($i < $numRows)
+								echo '["' . $name . '", ' . $row["times_checked_out"] . '],';
+							else
+								echo '["' . $name . '", ' . $row["times_checked_out"] . ']';
+						}
+						
+						mysqli_close($dbc); 
+						
+					?>
+                ]
+            }]
+        });
+    });
+    
+});
+		</script>
+
+
+
+<script src="js/highcharts.js"></script>
+<script src="js/modules/exporting.js"></script>
+<div id="container" style="width: 400px; height: 400px;"></div>
+
+
+<?php
+
+//footer:
+include ('./includes/footer.html');
+
+?>
